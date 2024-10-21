@@ -23,7 +23,7 @@ param imageReference = {
   sku: 'win11-23h2-avd-m365'
   // -- OR --
   // -- CUSTOM IMAGE --
-  id: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-vnet/providers/Microsoft.Compute/galleries/gal/images/sample/versions/1.0.0'
+  id: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-vnet/providers/Microsoft.Compute/galleries/gal/images/sample'
 }
 param osType = 'Windows'
 
