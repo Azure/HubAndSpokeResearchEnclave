@@ -67,7 +67,9 @@ module avdApplicationSecurityGroupModule 'br/public:avm/res/network/application-
 module managementSubnetSecurityRulesModule 'securityRules/managementAndAvdSubnetSecurityRules.bicep' = if (deployManagementSubnet) {
   name: take(replace(deploymentNameStructure, '{rtype}', 'sr-mgmt'), 64)
   params: {
-    applicationSecurityGroupId: managementApplicationSecurityGroupModule.outputs.resourceId
+    applicationSecurityGroupId: deployManagementSubnet
+      ? managementApplicationSecurityGroupModule.outputs.resourceId
+      : ''
     customDnsIPs: customDnsIPs
     deploySubnet: deployManagementSubnet
     domainControllerIPAddresses: domainControllerIPAddresses
@@ -79,7 +81,7 @@ module managementSubnetSecurityRulesModule 'securityRules/managementAndAvdSubnet
 module avdSubnetSecurityRulesModule 'securityRules/managementAndAvdSubnetSecurityRules.bicep' = if (deployAvdSubnet) {
   name: take(replace(deploymentNameStructure, '{rtype}', 'sr-avd'), 64)
   params: {
-    applicationSecurityGroupId: avdApplicationSecurityGroupModule.outputs.resourceId
+    applicationSecurityGroupId: deployAvdSubnet ? avdApplicationSecurityGroupModule.outputs.resourceId : ''
     customDnsIPs: customDnsIPs
     deploySubnet: deployAvdSubnet
     domainControllerIPAddresses: domainControllerIPAddresses
