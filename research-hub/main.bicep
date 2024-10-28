@@ -545,9 +545,9 @@ output hubPrivateDnsZonesResourceGroupId string = empty(existingPrivateDnsZonesR
   ? networkRg.id
   : existingPrivateDnsZonesResourceGroupId
 
-output managementVmId string = managementVmModule.outputs.vmId
-output managementVmUamiPrincipalId string = managementVmModule.outputs.uamiPrincipalId
-output managementVmUamiClientId string = managementVmModule.outputs.uamiClientId
+output managementVmId string = logonType == 'ad' ? managementVmModule.outputs.vmId : ''
+output managementVmUamiPrincipalId string = logonType == 'ad' ? managementVmModule.outputs.uamiPrincipalId : ''
+output managementVmUamiClientId string = logonType == 'ad' ? managementVmModule.outputs.uamiClientId : ''
 
 output imageDefinitionId string = imagingModule.outputs.imageDefinitionId
 
