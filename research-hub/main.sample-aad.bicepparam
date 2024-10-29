@@ -16,11 +16,11 @@ param researchVmsAreSessionHosts = true
 param addAutoDateCreatedTag = false
 param addDateModifiedTag = true
 
-param networkAddressSpace = '10.40.0.0/16'
-param customDnsIPs = [
-  '10.40.6.4'
-  '10.40.6.5'
-]
+// Must be /23 or larger
+param networkAddressSpace = '10.40.0.0/23'
+param customDnsIPs = []
+
+param ipAddressPool = ['10.40.0.0/16']
 
 param enableAvmTelemetry = true
 
