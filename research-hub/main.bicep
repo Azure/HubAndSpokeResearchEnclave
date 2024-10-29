@@ -94,7 +94,7 @@ param adOuPath string = ''
  * Network configuration parameters for the research hub
  */
 
-@description('The virtual network\'s address space in CIDR notation, e.g. 10.0.0.0/16. The last octet must be 0. The maximum IPv4 CIDR length is 24. The IPv6 CIDR length should be 64.')
+@description('The virtual network\'s address space in CIDR notation, e.g. 10.0.0.0/23. The last octet must be 0. The maximum IPv4 CIDR length is 23. The IPv6 (untested) CIDR length should be 64.')
 param networkAddressSpace string
 
 @description('Any additional subnets for the hub virtual network. Specify the properties using ARM syntax/naming.')
@@ -324,6 +324,7 @@ module uamiModule '../shared-modules/security/uami.bicep' = {
   }
 }
 
+// LATER: Move RBAC to uamiModule
 module uamiKvRbacModule '../module-library/roleAssignments/roleAssignment-kv.bicep' = {
   name: take(replace(deploymentNameStructure, '{rtype}', 'uami-kv-rbac'), 64)
   scope: securityRg
@@ -348,6 +349,7 @@ module encryptionKeysModule '../shared-modules/security/encryptionKeys.bicep' = 
 
 var kvEncryptionKeys = reduce(encryptionKeysModule.outputs.keys, {}, (cur, next) => union(cur, next))
 
+// Determine if any VMs are being deployed in the hub
 var deployingVMs = (!researchVmsAreSessionHosts && jumpBoxSessionHostCount > 0) || isAirlockReviewCentralized
 
 // Create a Disk Encryption Set if we're deploying any VMs and we need to use CMK
