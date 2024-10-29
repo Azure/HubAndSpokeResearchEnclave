@@ -54,7 +54,7 @@ bicep build-params $TemplateParameterFile --outfile $TemplateParameterJsonFile
 # Read the values from the parameters file, to use when generating the $DeploymentName value
 $ParameterFileContents = (Get-Content $TemplateParameterJsonFile | ConvertFrom-Json)
 $WorkloadName = $ParameterFileContents.parameters.workloadName.value
-$ImagingSubscriptionId = $ParameterFileContents.parameters.imageBuildSubscriptionId.value
+$ImagingSubscriptionId = $ParameterFileContents.parameters.imageBuildSubscriptionId?.value ?? $TargetSubscriptionId
 
 # Import the Azure subscription management module
 Import-Module ..\scripts\PowerShell\Modules\AzSubscriptionManagement.psm1
@@ -64,6 +64,7 @@ Set-AzContextWrapper -SubscriptionId $ImagingSubscriptionId -Environment $Enviro
 
 # LATER: Run provider and feature registrations in parallel
 Register-AzResourceProviderWrapper -ProviderNamespace "Microsoft.Storage"
+Register-AzResourceProviderWrapper -ProviderNamespace "Microsoft.Network"
 Register-AzResourceProviderWrapper -ProviderNamespace "Microsoft.ContainerInstance" # For image builder
 
 # Determine if a cloud context switch is required
