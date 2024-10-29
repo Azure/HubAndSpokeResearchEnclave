@@ -1,4 +1,4 @@
-# Azure-HubAndSpokeResearchEnclave
+# Hub-and-spoke Research Enclave
 
 A Hub-and-Spoke Azure enclave for secure research.
 
@@ -20,14 +20,17 @@ To accelerate the deployment of a hub-and-spoke architecture for building secure
 
 The goal of the project is that the templates will deploy resources that are compliant with the following frameworks (according to the Azure Commercial built-in initiatives):
 
-- HIPAA/HITRUST
+- HITRUST/HIPAA
 - NIST 800-171 R2
 - FedRAMP Moderate
 
 Compliance with all the above frameworks is a work-in-progress.
 
+## Deployment
+
+Deployment documentation is found in the [Wiki](wiki/Deployment).
+
 ## Alternative research enclave accelerators
 
 - Azure TRE: <https://microsoft.github.io/AzureTRE/>
 - Standalone Azure Secure Enclave for Research: <https://github.com/microsoft/Azure-Secure-Enclave-for-Research>
-- Mission Landing Zone (MLZ): <https://github.com/Azure/MissionLZ>

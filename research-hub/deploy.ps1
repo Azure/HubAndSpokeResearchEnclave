@@ -21,7 +21,7 @@
     ./deploy.ps1 '.\main.hub.bicepparam' '00000000-0000-0000-0000-000000000000' 'eastus'
 
 .EXAMPLE
-    ./deploy.ps1 '.\main.hub.bicepparam' '00000000-0000-0000-0000-000000000000' 'eastus' 'AzureUSGovernment'
+    ./deploy.ps1 '.\main.hub.bicepparam' '00000000-0000-0000-0000-000000000000' 'usgovvirginia' 'AzureUSGovernment'
 #>
 
 # LATER: Be more specific about the required modules; it will speed up the initial call
