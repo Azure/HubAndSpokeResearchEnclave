@@ -448,7 +448,7 @@ module avdJumpBoxSessionHostModule '../shared-modules/virtualDesktop/sessionHost
     vmLocalAdminUsername: sessionHostLocalAdminUsername
     vmLocalAdminPassword: sessionHostLocalAdminPassword
     #disable-next-line BCP335
-    vmNamePrefix: 'sh-${take(workloadName,11-length(string(sequence))-length('sh-'))}${sequence}'
+    vmNamePrefix: 'sh-${take(workloadName, 11 - length(string(sequence)) - length('sh-'))}${sequence}'
     vmSize: jumpBoxSessionHostVmSize
 
     ADDomainInfo: logonType == 'ad'
