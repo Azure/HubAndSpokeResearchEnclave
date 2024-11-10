@@ -27,7 +27,7 @@ param timeZone string
 
 param protectedAzureFileShares string[]
 
-@description('The schedule policy used for all custom backup policies.')
+@description('The schedule policy used for the custom Virtual Machine backup policy.')
 param schedulePolicy object = {
   schedulePolicyType: 'SimpleSchedulePolicyV2'
   scheduleRunFrequency: 'Hourly'
@@ -38,6 +38,16 @@ param schedulePolicy object = {
   }
   dailySchedule: null
   weeklySchedule: null
+}
+
+@description('The schedule policy used for the custom Azure File Shares backup policy.')
+param fileShareSchedulePolicy object = {
+  schedulePolicyType: 'SimpleSchedulePolicy'
+  scheduleRunFrequency: 'Daily'
+  scheduleRunDays: null
+  scheduleRunTimes: [
+    backupTime
+  ]
 }
 
 @description('The retention policy used for all custom backup policies.')
@@ -196,65 +206,41 @@ var splitNamingConvention = split(processNamingConventionPlaceholders, '{seq}')
 var azureBackupRGNamePrefix = '${splitNamingConvention[0]}${sequenceFormatted}-'
 var azureBackupRGNameSuffix = length(splitNamingConvention) > 1 ? splitNamingConvention[1] : ''
 
-// Create a single Azure File backup policy, even if there are multiple file shares or storage accounts
-module azureFileBackupPolicy 'backupPolicy.bicep' = if (length(protectedAzureFileShares) > 0) {
-  name: 'AzureFileShares'
-  params: {
-    vaultName: recoveryServicesVault.name
-    policyName: 'AzureFileSharesPolicy-${workloadName}-${sequenceFormatted}'
-    backupManagementType: 'AzureStorage'
-    workloadType: 'AzureFileShare'
-    timeZone: timeZone
-    retentionPolicy: retentionPolicy
-    schedulePolicy: schedulePolicy
-  }
+var backupPolicyCommonProperties = {
+  retentionPolicy: retentionPolicy
+  timeZone: timeZone
 }
 
-module azureIaasVmBackupPolicy 'backupPolicy.bicep' = {
-  name: 'AzureIaasVM'
-  params: {
-    vaultName: recoveryServicesVault.name
-    policyName: 'EnhancedPolicy-${workloadName}-${sequenceFormatted}'
-    backupManagementType: 'AzureIaasVm'
-    timeZone: timeZone
-    retentionPolicy: retentionPolicy
-    schedulePolicy: schedulePolicy
+var backupPolicyIaasVmProperties = {
+  schedulePolicy: schedulePolicy
+  backupManagementType: 'AzureIaasVM'
+  instantRpRetentionRangeInDays: 2
+  policyType: 'V2'
+  instantRPDetails: {
     azureBackupRGNamePrefix: azureBackupRGNamePrefix
     azureBackupRGNameSuffix: azureBackupRGNameSuffix
   }
 }
 
-// resource enhancedBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2024-04-01' = {
-//   name: 'EnhancedPolicy-${workloadName}-${sequenceFormatted}'
-//   parent: recoveryServicesVault
-//   properties: {
-//     backupManagementType: 'AzureIaasVM'
+var backupPolicyAzureStorageProperties = {
+  backupManagementType: 'AzureStorage'
+  workloadType: 'AzureFileShare'
+  schedulePolicy: fileShareSchedulePolicy
+}
 
-//     instantRPDetails: {
-//       // Following the naming convention of the other resource groups
-//       azureBackupRGNamePrefix: azureBackupRGNamePrefix
-//       azureBackupRGNameSuffix: azureBackupRGNameSuffix
-//     }
+// Create an enhanced VM backup policy to backup multiple times per day
+resource iaasVmBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2024-04-01' = {
+  name: 'EnhancedPolicy-${workloadName}-${sequenceFormatted}'
+  parent: recoveryServicesVault
+  properties: union(backupPolicyCommonProperties, backupPolicyIaasVmProperties)
+}
 
-//     instantRpRetentionRangeInDays: 2
-//     timeZone: timeZone
-//     policyType: 'V2'
-
-//     schedulePolicy: {
-//       schedulePolicyType: 'SimpleSchedulePolicyV2'
-//       scheduleRunFrequency: 'Hourly'
-//       hourlySchedule: {
-//         interval: 4
-//         scheduleWindowStartTime: backupTime
-//         scheduleWindowDuration: 4
-//       }
-//       dailySchedule: null
-//       weeklySchedule: null
-//     }
-
-//     retentionPolicy: retentionPolicy
-//   }
-// }
+// Create a single Azure File backup policy, even if there are multiple file shares or storage accounts
+resource filesBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2024-04-01' = if (length(protectedAzureFileShares) > 0) {
+  name: 'AzureFileSharesPolicy-${workloadName}-${sequenceFormatted}'
+  parent: recoveryServicesVault
+  properties: union(backupPolicyCommonProperties, backupPolicyAzureStorageProperties)
+}
 
 // Lock the Recovery Services Vault to prevent accidental deletion
 resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (!debugMode) {
@@ -267,7 +253,8 @@ resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (!debugMode) {
 
 output id string = recoveryServicesVault.id
 output name string = recoveryServicesVault.name
-output backupPolicyName string = azureIaasVmBackupPolicy.outputs.name
+//output backupPolicyName string = azureIaasVmBackupPolicy.outputs.name
+output backupPolicyName string = iaasVmBackupPolicy.name
 
 // For debug purposes only
 output backupResourceGroupNameStructure string = '${azureBackupRGNamePrefix}{N}${azureBackupRGNameSuffix}'
