@@ -67,7 +67,9 @@ module avdApplicationSecurityGroupModule 'br/public:avm/res/network/application-
 module managementSubnetSecurityRulesModule 'securityRules/managementAndAvdSubnetSecurityRules.bicep' = if (deployManagementSubnet) {
   name: take(replace(deploymentNameStructure, '{rtype}', 'sr-mgmt'), 64)
   params: {
-    applicationSecurityGroupId: managementApplicationSecurityGroupModule.outputs.resourceId
+    applicationSecurityGroupId: deployManagementSubnet
+      ? managementApplicationSecurityGroupModule.outputs.resourceId
+      : ''
     customDnsIPs: customDnsIPs
     deploySubnet: deployManagementSubnet
     domainControllerIPAddresses: domainControllerIPAddresses
@@ -79,7 +81,7 @@ module managementSubnetSecurityRulesModule 'securityRules/managementAndAvdSubnet
 module avdSubnetSecurityRulesModule 'securityRules/managementAndAvdSubnetSecurityRules.bicep' = if (deployAvdSubnet) {
   name: take(replace(deploymentNameStructure, '{rtype}', 'sr-avd'), 64)
   params: {
-    applicationSecurityGroupId: avdApplicationSecurityGroupModule.outputs.resourceId
+    applicationSecurityGroupId: deployAvdSubnet ? avdApplicationSecurityGroupModule.outputs.resourceId : ''
     customDnsIPs: customDnsIPs
     deploySubnet: deployAvdSubnet
     domainControllerIPAddresses: domainControllerIPAddresses
@@ -256,7 +258,7 @@ module managementSubnetIPGroupModule '../../../shared-modules/networking/ipGroup
 module azureFirewallModule './azureFirewall.bicep' = {
   name: take(replace(deploymentNameStructure, '{rtype}', 'azfw'), 64)
   params: {
-    firewallManagementSubnetId: networkModule.outputs.createdSubnets.AzureFirewallManagementSubnet.id
+    firewallManagementSubnetId: networkModule.outputs.createdSubnets.?AzureFirewallManagementSubnet.id // FW Management subnet is optional
     firewallSubnetId: networkModule.outputs.createdSubnets.AzureFirewallSubnet.id
     namingStructure: replace(resourceNamingStructure, '{subWorkloadName}', 'firewall')
     firewallTier: firewallTier
@@ -305,7 +307,7 @@ module avdRouteTableModule '../../../shared-modules/networking/rt.bicep' = if (d
       azureFirewallModule.outputs.fwPrIp
     ))
 
-    rtName: networkModule.outputs.createdSubnets.AvdSubnet.routeTableName
+    rtName: networkModule.outputs.createdSubnets.?AvdSubnet.routeTableName
     tags: tags
   }
 }
@@ -322,7 +324,7 @@ module mgmtRouteTableModule '../../../shared-modules/networking/rt.bicep' = if (
       azureFirewallModule.outputs.fwPrIp
     ))
 
-    rtName: networkModule.outputs.createdSubnets.ManagementSubnet.routeTableName
+    rtName: networkModule.outputs.createdSubnets.?ManagementSubnet.routeTableName
     tags: tags
   }
 }
@@ -339,7 +341,7 @@ module airlockRouteTableModule '../../../shared-modules/networking/rt.bicep' = i
       azureFirewallModule.outputs.fwPrIp
     ))
 
-    rtName: networkModule.outputs.createdSubnets.AirlockSubnet.routeTableName
+    rtName: networkModule.outputs.createdSubnets.?AirlockSubnet.routeTableName
     tags: tags
   }
 }
@@ -352,7 +354,7 @@ module bastionModule './bastion.bicep' = if (deployBastion) {
   name: take(replace(deploymentNameStructure, '{rtype}', 'bas'), 64)
   params: {
     location: location
-    bastionSubnetId: networkModule.outputs.createdSubnets.AzureBastionSubnet.id
+    bastionSubnetId: networkModule.outputs.createdSubnets.?AzureBastionSubnet.id
     namingStructure: replace(resourceNamingStructure, '{subWorkloadName}', 'bas')
     tags: tags
   }
@@ -366,7 +368,7 @@ module vpnGatewayModule './vpnGateway.bicep' = if (deployVpn && !useRemoteGatewa
   name: take(replace(deploymentNameStructure, '{rtype}', 'vpngw'), 64)
   params: {
     location: location
-    gatewaySubnetId: networkModule.outputs.createdSubnets.GatewaySubnet.id
+    gatewaySubnetId: networkModule.outputs.createdSubnets.?GatewaySubnet.id
     namingStructure: replace(resourceNamingStructure, '{subWorkloadName}', 'vpn')
     tags: tags
   }
