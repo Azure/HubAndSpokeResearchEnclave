@@ -28,14 +28,12 @@ if ($NWversion -lt "4.15.0") {
 	Install-Module -Name Az.Network -Repository PSGallery -Force -AllowClobber
 }
 
-# $VaultName = "WVU-WVUSpoke-test-rsv-canadacentral-02" #fetch automatically
-# $Subscription = "Research Spokes (07)" #fetch automatically
-# $ResourceGroup = "WVU-WVUSpoke-test-rg-backup-canadacentral-02" #fetch automatically
-# $SubscriptionId = "cd561c08-4403-47b5-a0ff-880f793a8824" #fetch automatically
-
 Select-AzSubscription $SubscriptionId
 $VaultToDelete = Get-AzRecoveryServicesVault -Name $VaultName -ResourceGroupName $ResourceGroup
 Set-AzRecoveryServicesAsrVaultContext -Vault $VaultToDelete
+
+$UpdatedVault = Update-AzRecoveryServicesVault -ResourceGroupName $VaultToDelete.ResourceGroupName -Name $VaultToDelete.Name -ImmutabilityState "Disabled"
+Write-Host "Immutability state set to $($UpdatedVault.Properties.ImmutabilitySettings.ImmutabilityState)"
 
 Set-AzRecoveryServicesVaultProperty -Vault $VaultToDelete.ID -SoftDeleteFeatureState Disable #disable soft delete
 Write-Host "Soft delete disabled for the vault" $VaultName
@@ -225,11 +223,11 @@ if ($ASRPolicyMappings -ne 0) { Write-Host $ASRPolicyMappings "ASR policy mappin
 if ($fabricCount -ne 0) { Write-Host $fabricCount "ASR Fabrics are still present in the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
 if ($pvtendpointsFin.count -ne 0) { Write-Host $pvtendpointsFin.count "Private endpoints are still linked to the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
 
-$accesstoken = Get-AzAccessToken
+$accesstoken = Get-AzAccessToken -AsSecureString
 $token = $accesstoken.Token
 $authHeader = @{
 	'Content-Type'  = 'application/json'
-	'Authorization' = 'Bearer ' + $token
+	'Authorization' = 'Bearer ' + (ConvertFrom-SecureString $token -AsPlainText)
 }
 $restUri = "https://management.azure.com//subscriptions/" + $SubscriptionId + '/resourcegroups/' + $ResourceGroup + '/providers/Microsoft.RecoveryServices/vaults/' + $VaultName + '?api-version=2021-06-01&operation=DeleteVaultUsingPS'
 $response = Invoke-RestMethod -Uri $restUri -Headers $authHeader -Method DELETE
