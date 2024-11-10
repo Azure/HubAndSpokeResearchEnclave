@@ -646,6 +646,8 @@ module recoveryServicesVaultModule '../shared-modules/recovery/recoveryServicesV
     keyVaultName: keyVaultModule.outputs.keyVaultName
 
     timeZone: 'Central Standard Time'
+
+    protectedStorageAccountId: storageModule.outputs.storageAccountId
     protectedAzureFileShares: [
       fileShareNames.shared
     ]

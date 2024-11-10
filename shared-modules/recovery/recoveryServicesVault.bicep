@@ -25,6 +25,7 @@ param weeklyRetentionDays ('Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thur
 ]
 param timeZone string
 
+param protectedStorageAccountId string
 param protectedAzureFileShares string[]
 
 @description('The schedule policy used for the custom Virtual Machine backup policy.')
@@ -144,7 +145,7 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' = 
 
     publicNetworkAccess: 'Enabled'
 
-    // Use a customer-managed key when not debugging and when specified
+    // Use a customer-managed key when not debugging and when required
     encryption: !debugMode && useCMK
       ? {
           keyVaultProperties: {
@@ -241,6 +242,19 @@ resource filesBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@202
   parent: recoveryServicesVault
   properties: union(backupPolicyCommonProperties, backupPolicyAzureStorageProperties)
 }
+
+// Create a protected item per Azure File Share to be protected
+module fileShareProtectedItems 'rsvProtectedItem-fs.bicep' = [
+  for fileShare in protectedAzureFileShares: {
+    name: take(replace(deploymentNameStructure, '{rtype}', 'rsv-fs-${fileShare}'), 64)
+    params: {
+      backupPolicyName: filesBackupPolicy.name
+      fileShareName: fileShare
+      recoveryServicesVaultId: recoveryServicesVault.id
+      storageAccountId: protectedStorageAccountId
+    }
+  }
+]
 
 // Lock the Recovery Services Vault to prevent accidental deletion
 resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (!debugMode) {
