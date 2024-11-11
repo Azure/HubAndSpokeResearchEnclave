@@ -10,6 +10,7 @@ param namingConvention string
 @minLength(3)
 @maxLength(24)
 param spokePrivateStorageAccountName string
+param spokePrivateFileShareName string
 
 @description('FUTURE: If true, the airlock will be configured to use the hub\'s airlock storage account for the egress review. If false, a new storage account will be created here.')
 param useCentralizedReview bool
@@ -388,8 +389,7 @@ module ingestTriggerModule 'adfTrigger.bicep' = if (length(allowedIngestFileExte
     sinkStorageAccountName: spokePrivateStorageAccountName
     containerName: containerNames.ingest
     additionalSinkFolderPath: 'incoming'
-    // TODO: Do not hardcode file share name 'shared'
-    sinkFileShareName: 'shared'
+    sinkFileShareName: spokePrivateFileShareName
     // The URL of the project's Key Vault
     // The project's KV stores the connection string to the project's file share
     sinkConnStringKvBaseUrl: keyVault.properties.vaultUri
@@ -411,8 +411,7 @@ module extensionIngestTriggersModule 'adfTrigger.bicep' = [
       sinkStorageAccountName: spokePrivateStorageAccountName
       containerName: containerNames.ingest
       additionalSinkFolderPath: 'incoming'
-      // TODO: Do not hardcode file share name 'shared'
-      sinkFileShareName: 'shared'
+      sinkFileShareName: spokePrivateFileShareName
       // The URL of the project's Key Vault
       // The project's KV stores the connection string to the project's file share
       sinkConnStringKvBaseUrl: keyVault.properties.vaultUri
