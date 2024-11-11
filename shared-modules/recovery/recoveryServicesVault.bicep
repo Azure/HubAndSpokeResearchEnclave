@@ -267,8 +267,7 @@ resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (!debugMode) {
 
 output id string = recoveryServicesVault.id
 output name string = recoveryServicesVault.name
-//output backupPolicyName string = azureIaasVmBackupPolicy.outputs.name
-output backupPolicyName string = iaasVmBackupPolicy.name
+output vmBackupPolicyName string = iaasVmBackupPolicy.name
 
 // For debug purposes only
 output backupResourceGroupNameStructure string = '${azureBackupRGNamePrefix}{N}${azureBackupRGNameSuffix}'

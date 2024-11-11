@@ -518,7 +518,7 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     diskEncryptionSetId: diskEncryptionSetModule.outputs.id
     sessionHostCount: sessionHostCount
 
-    backupPolicyName: recoveryServicesVaultModule.outputs.backupPolicyName
+    backupPolicyName: recoveryServicesVaultModule.outputs.vmBackupPolicyName
     recoveryServicesVaultId: recoveryServicesVaultModule.outputs.id
 
     // TODO: Use activeDirectoryDomainInfo type
@@ -669,7 +669,7 @@ resource avdConnectionPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-
 }
 
 output recoveryServicesVaultId string = recoveryServicesVaultModule.outputs.id
-output backupPolicyName string = recoveryServicesVaultModule.outputs.backupPolicyName
+output vmBackupPolicyName string = recoveryServicesVaultModule.outputs.vmBackupPolicyName
 output diskEncryptionSetId string = diskEncryptionSetModule.outputs.id
 output computeSubnetId string = networkModule.outputs.createdSubnets.computeSubnet.id
 output computeResourceGroupName string = computeRg.name
