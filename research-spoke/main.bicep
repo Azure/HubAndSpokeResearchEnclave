@@ -586,6 +586,7 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
 
     namingStructure: namingStructure
     spokePrivateStorageAccountName: storageModule.outputs.storageAccountName
+    spokePrivateFileShareName: fileShareNames.shared
     publicStorageAccountAllowedIPs: publicStorageAccountAllowedIPs
 
     roles: rolesModule.outputs.roles
