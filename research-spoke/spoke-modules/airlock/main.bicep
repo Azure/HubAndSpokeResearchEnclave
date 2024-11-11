@@ -41,6 +41,8 @@ param centralAirlockResources object = {}
 
 param publicStorageAccountAllowedIPs array = []
 
+param allowedIngestFileExtensions array = []
+
 @description('The resource ID of the user-assigned managed identity to be used to access the encryption keys in Key Vault.')
 param encryptionUamiId string
 
@@ -372,8 +374,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
   scope: spokeKeyVaultRg
 }
 
-// Trigger to move ingested blobs from the project's public storage account to the private storage account
-module ingestTriggerModule 'adfTrigger.bicep' = {
+// Trigger to move any ingested blobs from the project's public storage account to the private storage account
+module ingestTriggerModule 'adfTrigger.bicep' = if (length(allowedIngestFileExtensions) == 0) {
   name: replace(deploymentNameStructure, '{rtype}', 'adf-trigger-ingest')
   params: {
     adfName: adfModule.outputs.name
@@ -393,6 +395,31 @@ module ingestTriggerModule 'adfTrigger.bicep' = {
     sinkConnStringKvBaseUrl: keyVault.properties.vaultUri
   }
 }
+
+// Triggers to move ingested blobs with specific extensions from the project's public storage account to the private storage account
+module extensionIngestTriggersModule 'adfTrigger.bicep' = [
+  for extension in allowedIngestFileExtensions: {
+    name: replace(deploymentNameStructure, '{rtype}', 'adf-trigger-ingest-${replace(extension, '.', '')}')
+    params: {
+      adfName: adfModule.outputs.name
+      workspaceName: workspaceName
+      storageAccountId: publicStorageAccountModule.outputs.id
+      storageAccountType: 'Public'
+      ingestPipelineName: adfModule.outputs.pipelineName
+      #disable-next-line BCP334 BCP335
+      sourceStorageAccountName: publicStorageAccountModule.outputs.name
+      sinkStorageAccountName: spokePrivateStorageAccountName
+      containerName: containerNames.ingest
+      additionalSinkFolderPath: 'incoming'
+      // TODO: Do not hardcode file share name 'shared'
+      sinkFileShareName: 'shared'
+      // The URL of the project's Key Vault
+      // The project's KV stores the connection string to the project's file share
+      sinkConnStringKvBaseUrl: keyVault.properties.vaultUri
+      blobPathEndsWith: extension
+    }
+  }
+]
 
 // Create managed private endpoints for the private storage account's file and dfs endpoints
 module privateManagedPrivateEndpointModule 'adfManagedPrivateEndpoint.bicep' = {
