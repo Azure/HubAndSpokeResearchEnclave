@@ -20,14 +20,16 @@ param additionalSinkFolderPath string
 param sinkConnStringKvBaseUrl string
 
 param containerName string = ''
+param blobPathEndsWith string = ''
 
 resource trigger 'Microsoft.DataFactory/factories/triggers@2018-06-01' = {
-  name: '${adfName}/trigger_ws_${workspaceName}_${storageAccountType}_BlobCreated'
+  name: '${adfName}/trigger_ws_${workspaceName}_${storageAccountType}${!empty(blobPathEndsWith) ? '_${replace(blobPathEndsWith, '.', '')}' : ''}_BlobCreated'
   properties: {
     type: 'BlobEventsTrigger'
     typeProperties: {
       // No blobPathBeginsWith property means all containers will be matched (used for ingest)
       blobPathBeginsWith: !empty(containerName) ? '/${containerName}/blobs/' : null
+      blobPathEndsWith: blobPathEndsWith
       ignoreEmptyBlobs: true
       events: [
         'Microsoft.Storage.BlobCreated'
