@@ -623,7 +623,7 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
 }
 
 // Create a Recovery Services Vault and default backup policy
-module recoveryServicesVaultModule '../shared-modules/recovery/recoveryServicesVault.bicep' = {
+module recoveryServicesVaultModule '../shared-modules/recovery/main.bicep' = {
   name: take(replace(deploymentNameStructure, '{rtype}', 'recovery'), 64)
   scope: backupRg
   params: {
