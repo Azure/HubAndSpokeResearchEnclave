@@ -422,6 +422,12 @@ module avdJumpBoxModule '../shared-modules/virtualDesktop/avd.bicep' = if (!rese
   }
 }
 
+// Construct the session hosts' VM name prefix using the pattern "SH-{workloadName}-{sequence}",
+// taking into account that the max length of the vmNamePrefix is 11 characters
+var vmNamePrefixLead = 'sh-'
+var vmNamePrefixWorkloadName = take(workloadName, 11 - length(string(sequence)) - length('sh-'))
+var vmNamePrefix = '${vmNamePrefixLead}${vmNamePrefixWorkloadName}${sequence}'
+
 module avdJumpBoxSessionHostModule '../shared-modules/virtualDesktop/sessionHosts.bicep' = if (!researchVmsAreSessionHosts && jumpBoxSessionHostCount > 0) {
   scope: avdRg
   name: take(replace(deploymentNameStructure, '{rtype}', 'avd-sh'), 64)
@@ -447,7 +453,8 @@ module avdJumpBoxSessionHostModule '../shared-modules/virtualDesktop/sessionHost
     vmCount: jumpBoxSessionHostCount
     vmLocalAdminUsername: sessionHostLocalAdminUsername
     vmLocalAdminPassword: sessionHostLocalAdminPassword
-    vmNamePrefix: 'sh-${workloadName}${sequence}'
+    #disable-next-line BCP335 // Bicep can't figure out that we've ensured that the max length won't exceed 11
+    vmNamePrefix: vmNamePrefix
     vmSize: jumpBoxSessionHostVmSize
 
     ADDomainInfo: logonType == 'ad'
