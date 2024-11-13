@@ -243,7 +243,7 @@ var rsvRgName = !empty(recoveryServicesVaultId) ? split(recoveryServicesVaultId,
 
 // Create a backup item for each session host
 // This must be deployed in a separate module because it's in a different resource group
-module backupItems '../recovery/rsvProtectedItem.bicep' = if (!empty(backupPolicyName) && !empty(recoveryServicesVaultId)) {
+module backupItems '../recovery/rsvProtectedItem-vm.bicep' = if (!empty(backupPolicyName) && !empty(recoveryServicesVaultId)) {
   name: replace(deploymentNameStructure, '{rtype}', '${vmHostName}-backup')
   scope: resourceGroup(rsvRgName)
   params: {
