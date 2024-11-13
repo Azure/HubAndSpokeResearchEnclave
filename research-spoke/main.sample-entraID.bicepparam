@@ -52,6 +52,9 @@ param sessionHostLocalAdminPassword = az.getSecret(
 param sessionHostNamePrefix = 'vm-${workloadName}-${sequence}'
 param sessionHostSize = 'Standard_D2as_v5'
 
+// Optional
+param allowedIngestFileExtensions = ['.zip', '.tar.gz']
+
 param airlockApproverEmail = ''
 
 param isAirlockReviewCentralized = false

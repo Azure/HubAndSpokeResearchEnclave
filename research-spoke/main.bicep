@@ -105,6 +105,8 @@ param adminEntraIdObjectId string
 param isAirlockReviewCentralized bool = false
 @description('The email address of the reviewer for this project.')
 param airlockApproverEmail string
+@description('The allowed file extensions for ingest.')
+param allowedIngestFileExtensions array = []
 
 // HUB AIRLOCK NAMES
 @description('The full Azure resource ID of the hub\'s airlock review storage account.')
@@ -584,6 +586,7 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
 
     namingStructure: namingStructure
     spokePrivateStorageAccountName: storageModule.outputs.storageAccountName
+    spokePrivateFileShareName: fileShareNames.shared
     publicStorageAccountAllowedIPs: publicStorageAccountAllowedIPs
 
     roles: rolesModule.outputs.roles
@@ -619,6 +622,8 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
     ]
 
     usePrivateEndpoints: usePrivateEndpoints
+
+    allowedIngestFileExtensions: allowedIngestFileExtensions
   }
 }
 
