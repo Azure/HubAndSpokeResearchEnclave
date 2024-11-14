@@ -18,86 +18,29 @@ param storageType string = 'GeoRedundant'
 
 var vaultName = replace(namingStructure, '{rtype}', 'rsv')
 
-resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
-  name: keyVaultResourceGroupName
-  scope: subscription()
-}
-
-resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' = {
-  name: vaultName
-  location: location
-  tags: tags
-  sku: {
-    name: 'RS0'
-    tier: 'Standard'
-  }
-
-  identity: {
-    type: 'SystemAssigned'
-  }
-
-  properties: {
-    // Use only Azure Monitor for alerts
-    monitoringSettings: {
-      azureMonitorAlertSettings: {
-        alertsForAllJobFailures: 'Enabled'
-        // Only supported (and required) in later API versions
-        alertsForAllFailoverIssues: 'Enabled'
-        alertsForAllReplicationIssues: 'Enabled'
-      }
-      classicAlertSettings: {
-        alertsForCriticalOperations: 'Disabled'
-        // Only supported in later API versions
-        emailNotificationsForSiteRecovery: 'Disabled'
-      }
-    }
-
-    securitySettings: {
-      // Default to immutable but don't lock the policy
-      immutabilitySettings: {
-        state: debugMode ? 'Disabled' : 'Unlocked'
-      }
-    }
-
-    // Do not allow cross-subscription restores (to avoid leaking data between projects)
-    restoreSettings: {
-      crossSubscriptionRestoreSettings: {
-        crossSubscriptionRestoreState: 'PermanentlyDisabled'
-      }
-    }
-
-    publicNetworkAccess: 'Enabled'
-
-    // Use a customer-managed key when not debugging and when specified
-    encryption: !debugMode && useCMK
-      ? {
-          keyVaultProperties: {
-            keyUri: encryptionKeyUri
-          }
-          kekIdentity: {
-            useSystemAssignedIdentity: true
-          }
-          infrastructureEncryption: 'Enabled'
-        }
-      : null
-
-    redundancySettings: {
-      standardTierStorageRedundancy: storageType
-      crossRegionRestore: 'Enabled'
-    }
-  }
-}
-
-// Create a role assignment on the Key Vault for the system-assigned managed identity of the vault
-module keyVaultRoleAssignment '../../module-library/roleAssignments/roleAssignment-kv.bicep' = if (useCMK) {
-  name: take(replace(deploymentNameStructure, '{rtype}', 'rsv-kv-rbac'), 80)
-  scope: keyVaultResourceGroup
+module recoveryServicesVaultModule 'recoveryServicesVault-Enc.bicep' = {
+  name: take(replace(deploymentNameStructure, '{rtype}', 'rsv'), 64)
   params: {
-    kvName: keyVaultName
-    principalId: recoveryServicesVault.identity.principalId
-    roleDefinitionId: roles.KeyVaultCryptoUser
-    principalType: 'ServicePrincipal'
+    location: location
+    tags: tags
+    vaultName: vaultName
+    storageType: storageType
+
+    keyVaultResourceGroupName: keyVaultResourceGroupName
+    useCMK: useCMK
+    keyVaultName: keyVaultName
+    encryptionKeyUri: encryptionKeyUri
+
+    immutabilityState: debugMode ? 'Disabled' : 'Unlocked'
+
+    deploymentNameStructure: deploymentNameStructure
+    roles: roles
   }
+}
+
+resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' existing = {
+  name: vaultName
+  dependsOn: [recoveryServicesVaultModule]
 }
 
 // Enable soft delete settings
@@ -107,9 +50,11 @@ resource backupConfig 'Microsoft.RecoveryServices/vaults/backupconfig@2024-04-01
   parent: recoveryServicesVault
   properties: {
     enhancedSecurityState: debugMode ? 'Disabled' : 'Enabled'
+    // Never lock the Soft Delete state
     isSoftDeleteFeatureStateEditable: true
     softDeleteFeatureState: debugMode ? 'Disabled' : 'Enabled'
   }
+  dependsOn: [recoveryServicesVaultModule]
 }
 
 // Create a new enhanced policy to use custom schedule
@@ -203,6 +148,7 @@ resource enhancedBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@
       yearlySchedule: null
     }
   }
+  dependsOn: [recoveryServicesVaultModule]
 }
 
 // Lock the Recovery Services Vault to prevent accidental deletion
@@ -212,10 +158,11 @@ resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (!debugMode) {
   properties: {
     level: 'CanNotDelete'
   }
+  dependsOn: [recoveryServicesVaultModule]
 }
 
-output id string = recoveryServicesVault.id
-output name string = recoveryServicesVault.name
+output id string = recoveryServicesVaultModule.outputs.id
+output name string = recoveryServicesVaultModule.outputs.name
 output backupPolicyName string = enhancedBackupPolicy.name
 
 // For debug purposes only
