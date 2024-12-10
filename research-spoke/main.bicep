@@ -64,9 +64,9 @@ param createPolicyExemptions bool = false
 param policyAssignmentId string = ''
 
 @secure()
-param sessionHostLocalAdminUsername string
+param sessionHostLocalAdminUsername string = ''
 @secure()
-param sessionHostLocalAdminPassword string
+param sessionHostLocalAdminPassword string = ''
 @description('Specifies if logons to virtual machines should use AD or Entra ID.')
 @allowed(['ad', 'entraID'])
 param logonType string
@@ -381,10 +381,9 @@ module diskEncryptionSetModule '../shared-modules/security/diskEncryptionSet.bic
   dependsOn: [uamiKvRbacModule]
 }
 
-// TODO: Split once into var and re-use var
-var hubManagementVmSubscriptionId = split(hubManagementVmId, '/')[2]
-var hubManagementVmResourceGroupName = split(hubManagementVmId, '/')[4]
-var hubManagementVmName = split(hubManagementVmId, '/')[8]
+var hubManagementVmSubscriptionId = !empty(hubManagementVmId) ? split(hubManagementVmId, '/')[2] : ''
+var hubManagementVmResourceGroupName = !empty(hubManagementVmId) ? split(hubManagementVmId, '/')[4] : ''
+var hubManagementVmName = !empty(hubManagementVmId) ? split(hubManagementVmId, '/')[8] : ''
 
 import { roleAssignmentType } from '../shared-modules/types/roleAssignment.bicep'
 
