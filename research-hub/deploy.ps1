@@ -24,8 +24,10 @@
     ./deploy.ps1 '.\main.hub.bicepparam' '00000000-0000-0000-0000-000000000000' 'usgovvirginia' 'AzureUSGovernment'
 #>
 
-# LATER: Be more specific about the required modules; it will speed up the initial call
-#Requires -Modules "Az"
+#Requires -Version 7.4
+# Temporary version restriction due to Az PowerShell issue 26752
+# https://github.com/Azure/azure-powershell/issues/26752
+#Requires -Modules @{ ModuleName="Az.Resources"; MaximumVersion="7.6.0" }
 #Requires -PSEdition Core
 
 [CmdletBinding()]
@@ -79,6 +81,7 @@ Remove-Module AzSubscriptionManagement -WhatIf:$false
 [string]$DeploymentName = "$WorkloadName-$(Get-Date -Format 'yyyyMMddThhmmssZ' -AsUTC)"
 $CmdLetParameters.Add('Name', $DeploymentName)
 
+Write-Verbose "Starting deployment '$DeploymentName' to subscription '$TargetSubscriptionId' in location '$Location'"
 $DeploymentResults = New-AzDeployment @CmdLetParameters
 
 if ($DeploymentResults.ProvisioningState -eq 'Succeeded') {
