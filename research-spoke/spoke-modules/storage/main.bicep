@@ -155,7 +155,7 @@ module storageAccountModule 'storageAccount.bicep' = {
   }
 }
 
-resource hubManagementRg 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
+resource hubManagementRg 'Microsoft.Resources/resourceGroups@2024-03-01' existing = if (domainJoin && length(fileShareNames) > 0) {
   name: hubManagementRgName
   scope: subscription(hubSubscriptionId)
 }
