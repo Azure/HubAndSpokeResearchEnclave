@@ -520,7 +520,7 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     diskEncryptionSetId: diskEncryptionSetModule.outputs.id
     sessionHostCount: sessionHostCount
 
-    backupPolicyName: recoveryServicesVaultModule.outputs.backupPolicyName
+    backupPolicyName: recoveryServicesVaultModule.outputs.vmBackupPolicyName
     recoveryServicesVaultId: recoveryServicesVaultModule.outputs.id
 
     // TODO: Use activeDirectoryDomainInfo type
@@ -649,6 +649,13 @@ module recoveryServicesVaultModule '../shared-modules/recovery/recoveryServicesV
     roles: rolesModule.outputs.roles
     keyVaultResourceGroupName: keyVaultModule.outputs.resourceGroupName
     keyVaultName: keyVaultModule.outputs.keyVaultName
+
+    timeZone: 'Central Standard Time'
+
+    protectedStorageAccountId: storageModule.outputs.storageAccountId
+    protectedAzureFileShares: [
+      fileShareNames.shared
+    ]
   }
 }
 
@@ -667,7 +674,7 @@ resource avdConnectionPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-
 }
 
 output recoveryServicesVaultId string = recoveryServicesVaultModule.outputs.id
-output backupPolicyName string = recoveryServicesVaultModule.outputs.backupPolicyName
+output vmBackupPolicyName string = recoveryServicesVaultModule.outputs.vmBackupPolicyName
 output diskEncryptionSetId string = diskEncryptionSetModule.outputs.id
 output computeSubnetId string = networkModule.outputs.createdSubnets.computeSubnet.id
 output computeResourceGroupName string = computeRg.name
