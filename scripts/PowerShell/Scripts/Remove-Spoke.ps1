@@ -72,19 +72,22 @@ Import-Module ..\Modules\AzSubscriptionManagement.psm1
 # Determine if a cloud context switch is required
 Set-AzContextWrapper -SubscriptionId $TargetSubscriptionId -Environment $CloudEnvironment
 
-# Remove the module from the session
-Remove-Module AzSubscriptionManagement -WhatIf:$false
-
 # Check if any resource groups exist that match the pattern
 $ResourceGroups = Get-AzResourceGroup -Name $ResourceGroupNamePattern
 
 if ($ResourceGroups.Count -eq 0) {
     Write-Warning "No resource groups found matching pattern '$ResourceGroupNamePattern' in subscription '$((Get-AzContext).Subscription.Name)'."
+
+    # Remove the module from the session
+    Remove-Module AzSubscriptionManagement -WhatIf:$false
+
     return
 }
 else {
     Write-Host "Found $($ResourceGroups.Count) resource groups matching pattern '$ResourceGroupNamePattern' in subscription '$((Get-AzContext).Subscription.Name)'."
 }
+
+# [string]$SpokeVirtualNetworkResourceId = (Get-AzVirtualNetwork -ResourceGroupName $NetworkResourceGroupName -Name $SpokeVirtualNetworkName).Id
 
 ################################################################################
 # REMOVE ANY RESOURCE LOCKS
@@ -143,4 +146,33 @@ else {
     $ResourceGroups | Remove-AzResourceGroup -WhatIf | Out-Null
 }
 
-# LATER: Remove peering explicitly from hub
+################################################################################
+# REMOVE THE DISCONNECTED PEERING FROM THE RESEARCH HUB VIRTUAL NETWORK
+################################################################################
+
+# We could get the virtual network ID from the resources, but it's possible that the virtual network was already deleted but the peering wasn't
+[string]$SpokeVirtualNetworkName = $ResourceNamePattern.Replace("{rtype}", "vnet")
+[string]$NetworkResourceGroupName = $ResourceGroupNamePattern.Replace('*', 'network')
+[string]$SpokeVirtualNetworkResourceId = "/subscriptions/$TargetSubscriptionId/resourceGroups/$NetworkResourceGroupName/providers/Microsoft.Network/virtualNetworks/$SpokeVirtualNetworkName"
+
+[string]$HubVirtualNetworkId = $ParameterFileContents.parameters.hubVNetResourceId.value
+[string]$ResourceIDPattern = "/subscriptions/(?<subscriptionId>[^/]+)/resourceGroups/(?<resourceGroupName>[^/]+)/providers/[^/]+/[^/]+/(?<resourceName>[^/]+)"
+
+if ($HubVirtualNetworkId -match $ResourceIDPattern) {
+    [string]$HubSubscriptionId = $Matches['subscriptionId']
+    [string]$HubResourceGroupName = $Matches['resourceGroupName']
+    [string]$HubVirtualNetworkName = $Matches['resourceName']
+
+    Write-Verbose "Removing disconnected peering to spoke network '$SpokeVirtualNetworkName' from hub virtual network '$HubVirtualNetworkName' in resource group '$HubResourceGroupName' in subscription '$HubSubscriptionId'."
+    
+    Set-AzContextWrapper -SubscriptionId $HubSubscriptionId -Environment $CloudEnvironment    
+
+    # Remove peering explicitly from hub
+    Get-AzVirtualNetworkPeering -ResourceGroupName $HubResourceGroupName -VirtualNetworkName $HubVirtualNetworkName | `
+            # Find the peering using the peering state (to confirm it's disconnected) and the remote virtual network ID
+            Where-Object { $_.PeeringState -eq 'Disconnected' -and $_.RemoteVirtualNetwork.Id -eq $SpokeVirtualNetworkResourceId } | `
+            Remove-AzVirtualNetworkPeering -Force -Verbose:$VerbosePreference
+}
+
+# Remove the module from the session
+Remove-Module AzSubscriptionManagement -WhatIf:$false
