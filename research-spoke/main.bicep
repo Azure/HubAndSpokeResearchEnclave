@@ -1,5 +1,8 @@
 targetScope = 'subscription'
 
+metadata description = 'Deploys a research spoke associated with a previously deployed research hub.'
+metadata name = 'Research Spoke'
+
 //------------------------------ START PARAMETERS ------------------------------
 
 @description('The Azure region where the spoke will be deployed.')
@@ -135,7 +138,8 @@ param hubManagementVmUamiClientId string = ''
 
 param debugMode bool = false
 param debugRemoteIp string = ''
-param debugPrincipalId string = ''
+@description('The object ID of the user or group to assign permissions. Only used when `debugMode = true`.')
+param debugPrincipalId string = az.deployer().objectId
 
 //----------------------------- END PARAMETERS -----------------------------
 
@@ -672,6 +676,7 @@ resource avdConnectionPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-
   scope: hubDnsZoneResourceGroup
 }
 
+@description('The Azure resource ID of the spoke\'s Recovery Services Vault. Used in service module templates to add additional resources to the vault.')
 output recoveryServicesVaultId string = recoveryServicesVaultModule.outputs.id
 output vmBackupPolicyName string = recoveryServicesVaultModule.outputs.vmBackupPolicyName
 output diskEncryptionSetId string = diskEncryptionSetModule.outputs.id
