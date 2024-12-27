@@ -1,8 +1,22 @@
 @{
-    ModuleVersion = '0.0.1'
+    ModuleVersion = '0.0.2'
 }
 
 <#
+.SYNOPSIS
+    Sets the Azure environment and subscription context for the current session.
+
+.PARAMETER SubscriptionId
+    The Azure subscription ID to switch to.
+
+.PARAMETER Environment
+    The Azure environment to switch to. Default is 'AzureCloud'.
+
+.PARAMETER TenantId
+    The Azure tenant ID to switch to. Default is the current tenant.
+
+.NOTES
+    You must already be signed in to Azure using Connect-AzAccount before calling this function.
 #>
 Function Set-AzContextWrapper {
     [CmdletBinding()]
@@ -10,7 +24,9 @@ Function Set-AzContextWrapper {
         [Parameter(Mandatory, Position = 1)]
         [string]$SubscriptionId,
         [Parameter(Position = 2)]
-        [string]$Environment = 'AzureCloud'
+        [string]$Environment = 'AzureCloud',
+        [Parameter(Position = 3)]
+        [string]$TenantId = (Get-AzContext).Tenant.Id
     )
 
     # Because this function is in a module, $VerbosePreference doesn't carry over from the caller
@@ -19,11 +35,12 @@ Function Set-AzContextWrapper {
         $VerbosePreference = $PSCmdlet.GetVariableValue('VerbosePreference')
     }
 
-    # Determine if a cloud context switch is required
     $AzContext = Get-AzContext
+
+    # Determine if a cloud context switch is required
     if ($AzContext.Environment.Name -ne $Environment) {
         Write-Warning "Current Environment: '$($AzContext.Environment.Name)'. Switching to $Environment"
-        Connect-AzAccount -Environment $Environment
+        Connect-AzAccount -Environment $Environment -Tenant $TenantId 
         $AzContext = Get-AzContext
     }
     else {
@@ -33,7 +50,7 @@ Function Set-AzContextWrapper {
     # Determine if a subscription switch is required
     if ($SubscriptionId -ne (Get-AzContext).Subscription.Id) {
         Write-Verbose "Current subscription: '$($AzContext.Subscription.Id)'. Switching subscription."
-        Select-AzSubscription $SubscriptionId
+        Select-AzSubscription $SubscriptionId -Tenant $TenantId 
         $AzContext = Get-AzContext
     }
     else {
