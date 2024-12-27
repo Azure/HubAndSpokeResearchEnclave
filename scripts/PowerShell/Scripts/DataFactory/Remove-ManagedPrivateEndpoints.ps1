@@ -17,26 +17,22 @@ $RestMethodParameters = @{
     ResourceGroupName    = $ResourceGroupName
     ResourceProviderName = 'Microsoft.DataFactory'
     ResourceType         = @('factories', 'managedVirtualNetworks', 'managedPrivateEndpoints')
+    # 'default' is hardcoded because it's the only possible name for a managed virtual network
     Name                 = @($DataFactoryName, 'default')
     ApiVersion           = $DataFactoryApiVersion
 }
 
 $ManagedPrivateEndpoints = ((Invoke-AzRestMethod @RestMethodParameters).Content | ConvertFrom-Json).value
-Write-Host "Found $($ManagedPrivateEndpoints.Count) managed private endpoints in Data Factory '$DataFactoryName' in resource group '$ResourceGroupName'."
+Write-Host "Deleting $($ManagedPrivateEndpoints.Count) managed private endpoints in Data Factory '$DataFactoryName' in resource group '$ResourceGroupName'..."
 
 # If there are any managed private endpoints
 if ($ManagedPrivateEndpoints -and $ManagedPrivateEndpoints.Count -gt 0) {
+    # Update the REST method parameters for the DELETE request
+    $RestMethodParameters.Method = 'DELETE'
+
     foreach ($ManagedPrivateEndpoint in $ManagedPrivateEndpoints) {
-        $RestMethodParameters = @{
-            Method               = 'DELETE'
-            SubscriptionId       = $SubscriptionId
-            ResourceGroupName    = $StorageResourceGroupName
-            ResourceProviderName = 'Microsoft.DataFactory'
-            ResourceType         = @('factories', 'managedVirtualNetworks', 'managedPrivateEndpoints')
-            # 'default' is hardcoded because it's the only possible name for a managed virtual network
-            Name                 = @($DataFactoryName, 'default', $ManagedPrivateEndpoint.Name)
-            ApiVersion           = $DataFactoryApiVersion
-        }
+        # Update the REST method parameter to specify the name of the endpoint to be deleted
+        $RestMethodParameters.Name = @($DataFactoryName, 'default', $ManagedPrivateEndpoint.Name)
 
         if ($PSCmdlet.ShouldProcess($ManagedPrivateEndpoint.Name, "DELETE")) {
             # Debug Note: This call returns HTTP status code 200 even if the delete failed due to a resource lock
