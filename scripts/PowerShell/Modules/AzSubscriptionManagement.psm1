@@ -26,7 +26,7 @@ Function Set-AzContextWrapper {
         [Parameter(Position = 2)]
         [string]$Environment = 'AzureCloud',
         [Parameter(Position = 3)]
-        [string]$TenantId = (Get-AzContext).Tenant.Id
+        [string]$Tenant = (Get-AzContext).Tenant.Id
     )
 
     # Because this function is in a module, $VerbosePreference doesn't carry over from the caller
@@ -40,7 +40,7 @@ Function Set-AzContextWrapper {
     # Determine if a cloud context switch is required
     if ($AzContext.Environment.Name -ne $Environment) {
         Write-Warning "Current Environment: '$($AzContext.Environment.Name)'. Switching to $Environment"
-        Connect-AzAccount -Environment $Environment -Tenant $TenantId 
+        Connect-AzAccount -Environment $Environment -Tenant $Tenant
         $AzContext = Get-AzContext
     }
     else {
@@ -50,7 +50,7 @@ Function Set-AzContextWrapper {
     # Determine if a subscription switch is required
     if ($SubscriptionId -ne (Get-AzContext).Subscription.Id) {
         Write-Verbose "Current subscription: '$($AzContext.Subscription.Id)'. Switching subscription."
-        Select-AzSubscription $SubscriptionId -Tenant $TenantId 
+        Select-AzSubscription $SubscriptionId -Tenant $Tenant
         $AzContext = Get-AzContext
     }
     else {
