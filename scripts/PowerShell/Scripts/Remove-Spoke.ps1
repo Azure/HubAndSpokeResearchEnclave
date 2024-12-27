@@ -77,9 +77,14 @@ Remove-Module AzSubscriptionManagement -WhatIf:$false
 
 # Check if any resource groups exist that match the pattern
 $ResourceGroups = Get-AzResourceGroup -Name $ResourceGroupNamePattern
-Write-Host "Found $($ResourceGroups.Count) resource groups matching pattern '$ResourceGroupNamePattern' in subscription '$((Get-AzContext).Subscription.Name)'."
 
-Write-Verbose "WhatIf: $WhatIfPreference; Verbose: $VerbosePreference"
+if ($ResourceGroups.Count -eq 0) {
+    Write-Warning "No resource groups found matching pattern '$ResourceGroupNamePattern' in subscription '$((Get-AzContext).Subscription.Name)'."
+    return
+}
+else {
+    Write-Host "Found $($ResourceGroups.Count) resource groups matching pattern '$ResourceGroupNamePattern' in subscription '$((Get-AzContext).Subscription.Name)'."
+}
 
 ################################################################################
 # REMOVE ANY RESOURCE LOCKS
@@ -128,11 +133,14 @@ if ($Factory) {
 
 # Two separate commands needed because -AsJob does not support specifying a variable
 if ($PSCmdlet.ShouldProcess("spoke resource groups", "Remove")) {
-    $ResourceGroups | Remove-AzResourceGroup -AsJob -Force -Verbose:$VerbosePreference | Out-Null
+    $Jobs = @()
+    $Jobs += $ResourceGroups | Remove-AzResourceGroup -AsJob -Force -Verbose:$VerbosePreference
 
+    Write-Host "Waiting for $($Jobs.Count) resource groups to be deleted..."
+    $Jobs | Get-Job | Wait-Job | Select-Object -Property Id, StatusMessage, Name | Format-Table -AutoSize
 }
 else {
     $ResourceGroups | Remove-AzResourceGroup -WhatIf | Out-Null
 }
 
-# LATER: Remove peering explicitly from hub?
+# LATER: Remove peering explicitly from hub
