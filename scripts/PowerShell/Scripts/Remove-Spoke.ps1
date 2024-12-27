@@ -32,8 +32,12 @@ param (
     [Parameter(Mandatory, Position = 2)]
     [string]$TargetSubscriptionId,
     [Parameter(Position = 3)]
-    [string]$CloudEnvironment = 'AzureCloud'
+    [string]$CloudEnvironment = 'AzureCloud',
+    [Parameter(Position = 4)]
+    [string]$TenantId = ''
 )
+
+$ErrorActionPreference = 'Stop'
 
 ################################################################################
 # PREPARE VARIABLES
@@ -60,119 +64,122 @@ $ParameterFileContents = (Get-Content $TemplateParameterJsonFile | ConvertFrom-J
 [string]$ResourceGroupNamePattern = $ResourceNamePattern.Replace("{rtype}", "rg-*")
 Write-Verbose "Looking for resource groups matching pattern '$ResourceGroupNamePattern'."
 
-$ErrorActionPreference = 'Stop'
+try {
+    ################################################################################
+    # SET AZURE CONTEXT AND CHECK RESOURCE EXISTENCE
+    ################################################################################
 
-################################################################################
-# SET AZURE CONTEXT AND CHECK RESOURCE EXISTENCE
-################################################################################
+    # Import the Azure subscription management module
+    Import-Module ..\Modules\AzSubscriptionManagement.psm1
 
-# Import the Azure subscription management module
-Import-Module ..\Modules\AzSubscriptionManagement.psm1
+    $OriginalContext = Get-AzContext
 
-# Determine if a cloud context switch is required
-Set-AzContextWrapper -SubscriptionId $TargetSubscriptionId -Environment $CloudEnvironment
+    # Determine if a cloud context switch is required
+    $AzContext = Set-AzContextWrapper -SubscriptionId $TargetSubscriptionId -Environment $CloudEnvironment
 
-# Check if any resource groups exist that match the pattern
-$ResourceGroups = Get-AzResourceGroup -Name $ResourceGroupNamePattern
+    # Check if any resource groups exist that match the pattern
+    $ResourceGroups = Get-AzResourceGroup -Name $ResourceGroupNamePattern
 
-if ($ResourceGroups.Count -eq 0) {
-    Write-Warning "No resource groups found matching pattern '$ResourceGroupNamePattern' in subscription '$((Get-AzContext).Subscription.Name)'."
+    if ($ResourceGroups.Count -eq 0) {
+        Write-Warning "No resource groups found matching pattern '$ResourceGroupNamePattern' in subscription '$((Get-AzContext).Subscription.Name)'."
+        exit
+    }
+    else {
+        Write-Host "Found $($ResourceGroups.Count) resource groups matching pattern '$ResourceGroupNamePattern' in subscription '$((Get-AzContext).Subscription.Name)'."
+    }
+
+    ################################################################################
+    # REMOVE ANY RESOURCE LOCKS
+    ################################################################################
+
+    $ResourceGroups | ForEach-Object { 
+        Get-AzResourceLock -ResourceGroupName $_.ResourceGroupName | Remove-AzResourceLock -Force 
+    }
+
+    ################################################################################
+    # REMOVE THE RECOVERY SERVICES VAULT
+    ################################################################################
+
+    # Check if the expected Recovery Services Vault exists in the expected resource group
+    [string]$BackupResourceGroupName = $ResourceGroupNamePattern.Replace("*", "backup")
+    [string]$RecoveryServicesVaultName = $ResourceNamePattern.Replace("{rtype}", "rsv")
+
+    $Vault = Get-AzRecoveryServicesVault -ResourceGroupName $BackupResourceGroupName -Name $RecoveryServicesVaultName -ErrorAction SilentlyContinue
+
+    if ($Vault) {
+        Write-Verbose "Removing Recovery Services Vault '$RecoveryServicesVaultName' in resource group '$BackupResourceGroupName'."
+        & ./Recovery/Remove-rsv.ps1 -VaultName $RecoveryServicesVaultName `
+            -ResourceGroup $BackupResourceGroupName -SubscriptionId $TargetSubscriptionId `
+            -WhatIf:$WhatIfPreference -Verbose:$VerbosePreference
+    }
+
+    ################################################################################
+    # REMOVE THE DATA FACTORY MANAGED PRIVATE ENDPOINTS
+    ################################################################################
+
+    [string]$StorageResourceGroupName = $ResourceGroupNamePattern.Replace('*', 'storage')
+    [string]$DataFactoryName = $ResourceNamePatternSubWorkload.Replace('{rtype}', 'adf').Replace('{subWorkloadName}', 'airlock')
+
+    # Check if the expected Data Factory exists in the expected resource group
+    $Factory = Get-AzDataFactoryV2 -ResourceGroupName $StorageResourceGroupName -Name $DataFactoryName -ErrorAction SilentlyContinue
+
+    if ($Factory) {
+        & ./DataFactory/Remove-ManagedPrivateEndpoints.ps1 -DataFactoryName $DataFactoryName `
+            -ResourceGroup $StorageResourceGroupName -SubscriptionId $TargetSubscriptionId `
+            -WhatIf:$WhatIfPreference -Verbose:$VerbosePreference
+    }
+
+    ################################################################################
+    # REMOVE THE RESOURCE GROUPS
+    ################################################################################
+
+    # Two separate commands needed because -AsJob does not support specifying a variable
+    if ($PSCmdlet.ShouldProcess("spoke resource groups", "Remove")) {
+        $Jobs = @()
+        $Jobs += $ResourceGroups | Remove-AzResourceGroup -AsJob -Force -Verbose:$VerbosePreference
+
+        Write-Host "Waiting for $($Jobs.Count) resource groups to be deleted..."
+        $Jobs | Get-Job | Wait-Job | Select-Object -Property Id, StatusMessage, Name | Format-Table -AutoSize
+    }
+    else {
+        $ResourceGroups | Remove-AzResourceGroup -WhatIf | Out-Null
+    }
+
+    ################################################################################
+    # REMOVE THE DISCONNECTED PEERING FROM THE RESEARCH HUB VIRTUAL NETWORK
+    ################################################################################
+
+    [string]$HubVirtualNetworkId = $ParameterFileContents.parameters.hubVNetResourceId.value
+    [string]$ResourceIDPattern = "/subscriptions/(?<subscriptionId>[^/]+)/resourceGroups/(?<resourceGroupName>[^/]+)/providers/[^/]+/[^/]+/(?<resourceName>[^/]+)"
+
+    if ($HubVirtualNetworkId -match $ResourceIDPattern) {
+        [string]$HubSubscriptionId = $Matches['subscriptionId']
+        [string]$HubResourceGroupName = $Matches['resourceGroupName']
+        [string]$HubVirtualNetworkName = $Matches['resourceName']
+
+        # We could get the virtual network ID from the spoke resources, but it's possible that the virtual network was already deleted but the peering wasn't
+        [string]$SpokeVirtualNetworkName = $ResourceNamePattern.Replace("{rtype}", "vnet")
+        [string]$NetworkResourceGroupName = $ResourceGroupNamePattern.Replace('*', 'network')
+        [string]$SpokeVirtualNetworkResourceId = "/subscriptions/$TargetSubscriptionId/resourceGroups/$NetworkResourceGroupName/providers/Microsoft.Network/virtualNetworks/$SpokeVirtualNetworkName"
+
+        Write-Verbose "Removing disconnected peering to spoke network '$SpokeVirtualNetworkName' from hub virtual network '$HubVirtualNetworkName' in resource group '$HubResourceGroupName' in subscription '$HubSubscriptionId'."
+    
+        $AzContext = Set-AzContextWrapper -SubscriptionId $HubSubscriptionId -Environment $CloudEnvironment    
+
+        # Remove peering explicitly from hub
+        Get-AzVirtualNetworkPeering -ResourceGroupName $HubResourceGroupName -VirtualNetworkName $HubVirtualNetworkName | `
+                # Find the peering using the peering state (to confirm it's disconnected) and the remote virtual network ID
+                Where-Object { $_.PeeringState -eq 'Disconnected' -and $_.RemoteVirtualNetwork.Id -eq $SpokeVirtualNetworkResourceId } | `
+                Remove-AzVirtualNetworkPeering -Force -Verbose:$VerbosePreference
+    }
+}
+catch {
+    Write-Host "An error occurred: $($_)"
+    Write-Host $_.ScriptStackTrace
+}
+finally {
+    $AzContext = Set-AzContextWrapper -SubscriptionId $OriginalContext.Subscription.Id -Environment $OriginalContext.Environment.Name
 
     # Remove the module from the session
     Remove-Module AzSubscriptionManagement -WhatIf:$false
-
-    return
 }
-else {
-    Write-Host "Found $($ResourceGroups.Count) resource groups matching pattern '$ResourceGroupNamePattern' in subscription '$((Get-AzContext).Subscription.Name)'."
-}
-
-# [string]$SpokeVirtualNetworkResourceId = (Get-AzVirtualNetwork -ResourceGroupName $NetworkResourceGroupName -Name $SpokeVirtualNetworkName).Id
-
-################################################################################
-# REMOVE ANY RESOURCE LOCKS
-################################################################################
-
-$ResourceGroups | ForEach-Object { 
-    Get-AzResourceLock -ResourceGroupName $_.ResourceGroupName | Remove-AzResourceLock -Force 
-}
-
-################################################################################
-# REMOVE THE RECOVERY SERVICES VAULT
-################################################################################
-
-# Check if the expected Recovery Services Vault exists in the expected resource group
-[string]$BackupResourceGroupName = $ResourceGroupNamePattern.Replace("*", "backup")
-[string]$RecoveryServicesVaultName = $ResourceNamePattern.Replace("{rtype}", "rsv")
-
-$Vault = Get-AzRecoveryServicesVault -ResourceGroupName $BackupResourceGroupName -Name $RecoveryServicesVaultName -ErrorAction SilentlyContinue
-
-if ($Vault) {
-    Write-Verbose "Removing Recovery Services Vault '$RecoveryServicesVaultName' in resource group '$BackupResourceGroupName'."
-    & ./Recovery/Remove-rsv.ps1 -VaultName $RecoveryServicesVaultName `
-        -ResourceGroup $BackupResourceGroupName -SubscriptionId $TargetSubscriptionId `
-        -WhatIf:$WhatIfPreference -Verbose:$VerbosePreference
-}
-
-################################################################################
-# REMOVE THE DATA FACTORY MANAGED PRIVATE ENDPOINTS
-################################################################################
-
-[string]$StorageResourceGroupName = $ResourceGroupNamePattern.Replace('*', 'storage')
-[string]$DataFactoryName = $ResourceNamePatternSubWorkload.Replace('{rtype}', 'adf').Replace('{subWorkloadName}', 'airlock')
-
-# Check if the expected Data Factory exists in the expected resource group
-$Factory = Get-AzDataFactoryV2 -ResourceGroupName $StorageResourceGroupName -Name $DataFactoryName -ErrorAction SilentlyContinue
-
-if ($Factory) {
-    & ./DataFactory/Remove-ManagedPrivateEndpoints.ps1 -DataFactoryName $DataFactoryName `
-        -ResourceGroup $StorageResourceGroupName -SubscriptionId $TargetSubscriptionId `
-        -WhatIf:$WhatIfPreference -Verbose:$VerbosePreference
-}
-
-################################################################################
-# REMOVE THE RESOURCE GROUPS
-################################################################################
-
-# Two separate commands needed because -AsJob does not support specifying a variable
-if ($PSCmdlet.ShouldProcess("spoke resource groups", "Remove")) {
-    $Jobs = @()
-    $Jobs += $ResourceGroups | Remove-AzResourceGroup -AsJob -Force -Verbose:$VerbosePreference
-
-    Write-Host "Waiting for $($Jobs.Count) resource groups to be deleted..."
-    $Jobs | Get-Job | Wait-Job | Select-Object -Property Id, StatusMessage, Name | Format-Table -AutoSize
-}
-else {
-    $ResourceGroups | Remove-AzResourceGroup -WhatIf | Out-Null
-}
-
-################################################################################
-# REMOVE THE DISCONNECTED PEERING FROM THE RESEARCH HUB VIRTUAL NETWORK
-################################################################################
-
-# We could get the virtual network ID from the resources, but it's possible that the virtual network was already deleted but the peering wasn't
-[string]$SpokeVirtualNetworkName = $ResourceNamePattern.Replace("{rtype}", "vnet")
-[string]$NetworkResourceGroupName = $ResourceGroupNamePattern.Replace('*', 'network')
-[string]$SpokeVirtualNetworkResourceId = "/subscriptions/$TargetSubscriptionId/resourceGroups/$NetworkResourceGroupName/providers/Microsoft.Network/virtualNetworks/$SpokeVirtualNetworkName"
-
-[string]$HubVirtualNetworkId = $ParameterFileContents.parameters.hubVNetResourceId.value
-[string]$ResourceIDPattern = "/subscriptions/(?<subscriptionId>[^/]+)/resourceGroups/(?<resourceGroupName>[^/]+)/providers/[^/]+/[^/]+/(?<resourceName>[^/]+)"
-
-if ($HubVirtualNetworkId -match $ResourceIDPattern) {
-    [string]$HubSubscriptionId = $Matches['subscriptionId']
-    [string]$HubResourceGroupName = $Matches['resourceGroupName']
-    [string]$HubVirtualNetworkName = $Matches['resourceName']
-
-    Write-Verbose "Removing disconnected peering to spoke network '$SpokeVirtualNetworkName' from hub virtual network '$HubVirtualNetworkName' in resource group '$HubResourceGroupName' in subscription '$HubSubscriptionId'."
-    
-    Set-AzContextWrapper -SubscriptionId $HubSubscriptionId -Environment $CloudEnvironment    
-
-    # Remove peering explicitly from hub
-    Get-AzVirtualNetworkPeering -ResourceGroupName $HubResourceGroupName -VirtualNetworkName $HubVirtualNetworkName | `
-            # Find the peering using the peering state (to confirm it's disconnected) and the remote virtual network ID
-            Where-Object { $_.PeeringState -eq 'Disconnected' -and $_.RemoteVirtualNetwork.Id -eq $SpokeVirtualNetworkResourceId } | `
-            Remove-AzVirtualNetworkPeering -Force -Verbose:$VerbosePreference
-}
-
-# Remove the module from the session
-Remove-Module AzSubscriptionManagement -WhatIf:$false
