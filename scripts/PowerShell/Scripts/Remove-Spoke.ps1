@@ -18,13 +18,13 @@
     DANGER: Forces the deletion of the spoke resources without prompting for confirmation.
 
 .EXAMPLE
-    ./deploy.ps1 -TemplateParameterFile '.\main.hub.bicepparam' -TargetSubscriptionId '00000000-0000-0000-0000-000000000000'
+    PS> ./deploy.ps1 -TemplateParameterFile '.\main.hub.bicepparam' -TargetSubscriptionId '00000000-0000-0000-0000-000000000000'
 
 .EXAMPLE
-    ./deploy.ps1 '.\main.hub.bicepparam' '00000000-0000-0000-0000-000000000000'
+    PS> ./deploy.ps1 '.\main.hub.bicepparam' '00000000-0000-0000-0000-000000000000'
 
 .EXAMPLE
-    ./deploy.ps1 '.\main.hub.bicepparam' '00000000-0000-0000-0000-000000000000' 'AzureUSGovernment'
+    PS> ./deploy.ps1 '.\main.hub.bicepparam' '00000000-0000-0000-0000-000000000000' 'AzureUSGovernment'
 #>
 
 # LATER: Be more specific about the required modules; it will speed up the initial call

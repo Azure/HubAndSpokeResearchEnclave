@@ -6,17 +6,36 @@
 .SYNOPSIS
     Sets the Azure environment and subscription context for the current session.
 
+.DESCRIPTION
+    Sets the Azure environment and subscription context for the current session.
+
 .PARAMETER SubscriptionId
     The Azure subscription ID to switch to.
 
 .PARAMETER Environment
     The Azure environment to switch to. Default is 'AzureCloud'.
 
-.PARAMETER TenantId
+.PARAMETER Tenant
     The Azure tenant ID to switch to. Default is the current tenant.
 
 .NOTES
-    You must already be signed in to Azure using Connect-AzAccount before calling this function.
+    You must already be signed in to Azure using `Connect-AzAccount` before calling this function.
+
+.EXAMPLE 
+    PS> Set-AzContextWrapper -SubscriptionId '00000000-0000-0000-0000-000000000000'
+
+    This example switches the current session to the subscription with the ID '00000000-0000-0000-0000-000000000000'.
+
+.EXAMPLE
+    PS> Set-AzContextWrapper -SubscriptionId '00000000-0000-0000-0000-000000000000' -Environment 'AzureUSGovernment'
+
+    This example switches the current session to the subscription with the ID '00000000-0000-0000-0000-000000000000' in Azure US Government.
+
+.INPUTS
+    None.
+
+.OUTPUTS
+    None.
 #>
 Function Set-AzContextWrapper {
     [CmdletBinding()]
@@ -61,14 +80,25 @@ Function Set-AzContextWrapper {
 }
 
 <#
-    .SYNOPSIS
+.SYNOPSIS
     Registers an Azure subscription for a resource provider feature.
 
-    .DESCRIPTION
+.DESCRIPTION
     Determines if the specified feature for the specified resource provider namespace is registered. If not, it will register the feature and wait for registration to complete.
 
-    .NOTES
+.NOTES
     The current Azure context will be used to determine the subscription to register the feature in.
+
+.PARAMETER ProviderNamespace
+    The namespace of the resource provider to register the feature for.
+
+.PARAMETER FeatureName
+    The name of the feature to register.
+
+.EXAMPLE
+    PS> Register-AzProviderFeatureWrapper -ProviderNamespace "Microsoft.Compute" -FeatureName "EncryptionAtHost"
+
+    This example registers the 'EncryptionAtHost' feature for the 'Microsoft.Compute' resource provider namespace in the current subscription.
 #>
 Function Register-AzProviderFeatureWrapper {
     [CmdletBinding()]
@@ -120,14 +150,22 @@ Function Register-AzProviderFeatureWrapper {
 }
 
 <#
-    .SYNOPSIS
-    Registers an Azure subscription for a resource provider feature.
+.SYNOPSIS
+    Registers an Azure subscription for a resource provider.
 
-    .DESCRIPTION
-    Determines if the specified feature for the specified resource provider namespace is registered. If not, it will register the feature and wait for registration to complete.
+.DESCRIPTION
+    Determines if the specified resource provider namespace is registered. If not, it will register the provider and wait for the registration to finish.
 
-    .NOTES
-    The current Azure context will be used to determine the subscription to register the feature in.
+.NOTES
+    The current Azure context will be used to determine the subscription to register the provider in.
+
+.EXAMPLE
+    PS> Register-AzResourceProviderWrapper -ProviderNamespace "Microsoft.Network"
+
+    This example registers the 'Microsoft.Network' resource provider in the current subscription.
+
+.PARAMETER ProviderNamespace
+    The namespace of the resource provider to register.
 #>
 Function Register-AzResourceProviderWrapper {
     [CmdletBinding()]
