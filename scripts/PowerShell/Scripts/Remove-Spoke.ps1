@@ -93,7 +93,7 @@ try {
     }
 
     $Msg1 = "Found $($ResourceGroups.Count) resource groups matching pattern '$ResourceGroupNamePattern' in subscription '$((Get-AzContext).Subscription.Name)'."
-    $Msg = "$Msg1`nThese actions cannot be undone and data loss might occur. Do you want to continue?"
+    $Msg = "$Msg1`nAny resource locks will be deleted.`nThese actions cannot be undone and data loss might occur. Do you want to continue removing this spoke?"
 
     if (-not ($WhatIfPreference -or $Force -or $PSCmdlet.ShouldContinue($Msg, 'Confirm Spoke Removal'))) {    
         exit
@@ -114,7 +114,7 @@ try {
 
     Write-Verbose "STEP 1: Removing resource locks..."
     $ResourceGroups | ForEach-Object { 
-        Get-AzResourceLock -ResourceGroupName $_.ResourceGroupName | Remove-AzResourceLock -Force 
+        Get-AzResourceLock -ResourceGroupName $_.ResourceGroupName | Remove-AzResourceLock -Force | Out-Null
     }
 
     ################################################################################
@@ -207,5 +207,5 @@ finally {
 
     # Remove the module from the session
     Remove-Module AzSubscriptionManagement -WhatIf:$false
-    Write-Verbose "Done!"
+    Write-Host "Done!"
 }
