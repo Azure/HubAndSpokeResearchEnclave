@@ -27,19 +27,19 @@ Parameter name | Required | Description
 [customDnsIps](#customDnsIps) | False    | The DNS IP addresses to use for the virtual network. Defaults to the hub firewall IP.
 [hubVNetResourceId](#hubVNetResourceId) | True     | The Azure resource ID of the hub virtual network to peer with.
 [hubPrivateDnsZonesResourceGroupId](#hubPrivateDnsZonesResourceGroupId) | True     | The resource ID of the resource group in the hub subscription where storage account-related private DNS zones live.
-[additionalSubnets](#additionalSubnets) | True     | The definition of additional subnets that have been manually created.
+[additionalSubnets](#additionalSubnets) | False    | The definition of additional subnets that have been manually created.
 [desktopAppGroupFriendlyName](#desktopAppGroupFriendlyName) | False    | Name of the Desktop application group shown to users in the AVD client.
 [workspaceFriendlyName](#workspaceFriendlyName) | False    | Name of the Workspace shown to users in the AVD client.
-[createPolicyExemptions](#createPolicyExemptions) | True     | If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.
-[policyAssignmentId](#policyAssignmentId) | True     | Required if policy exemptions must be created.
-[sessionHostLocalAdminUsername](#sessionHostLocalAdminUsername) | True     |
-[sessionHostLocalAdminPassword](#sessionHostLocalAdminPassword) | True     |
+[createPolicyExemptions](#createPolicyExemptions) | False    | If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.
+[policyAssignmentId](#policyAssignmentId) | False    | Required if policy exemptions must be created.
+[sessionHostLocalAdminUsername](#sessionHostLocalAdminUsername) | False    |
+[sessionHostLocalAdminPassword](#sessionHostLocalAdminPassword) | False    |
 [logonType](#logonType) | True     | Specifies if logons to virtual machines should use AD or Entra ID.
-[domainJoinUsername](#domainJoinUsername) | True     | The username of a domain user or service account to use to join the Active Directory domain. Use UPN notation. Required if using AD join.
-[domainJoinPassword](#domainJoinPassword) | True     | The password of the domain user or service account to use to join the Active Directory domain. Required if using AD join.
+[domainJoinUsername](#domainJoinUsername) | False    | The username of a domain user or service account to use to join the Active Directory domain. Use UPN notation. Required if using AD join.
+[domainJoinPassword](#domainJoinPassword) | False    | The password of the domain user or service account to use to join the Active Directory domain. Required if using AD join.
 [filesIdentityType](#filesIdentityType) | True     |
-[adDomainFqdn](#adDomainFqdn) | True     | The fully qualified DNS name of the Active Directory domain to join. Required if using AD join.
-[adOuPath](#adOuPath) | True     | Optional. The OU path in LDAP notation to use when joining the session hosts.
+[adDomainFqdn](#adDomainFqdn) | False    | The fully qualified DNS name of the Active Directory domain to join. Required if using AD join.
+[adOuPath](#adOuPath) | False    | Optional. The OU path in LDAP notation to use when joining the session hosts.
 [storageAccountOuPath](#storageAccountOuPath) | False    | Optional. The OU Path in LDAP notation to use when joining the storage account. Defaults to the same OU as the session hosts.
 [sessionHostCount](#sessionHostCount) | False    | Optional. The number of Azure Virtual Desktop session hosts to create in the pool. Defaults to 1.
 [sessionHostNamePrefix](#sessionHostNamePrefix) | False    | The prefix used for the computer names of the session host(s). Maximum 11 characters.
@@ -47,19 +47,19 @@ Parameter name | Required | Description
 [useSessionHostAsResearchVm](#useSessionHostAsResearchVm) | False    | If true, will configure the deployment of AVD to make the AVD session hosts usable as research VMs. This will give full desktop access, flow the AVD traffic through the firewall, etc.
 [researcherEntraIdObjectId](#researcherEntraIdObjectId) | True     | Entra ID object ID of the user or group (researchers) to assign permissions to access the AVD application groups and storage.
 [adminEntraIdObjectId](#adminEntraIdObjectId) | True     | Entra ID object ID of the admin user or group to assign permissions to administer the AVD session hosts, storage, etc.
-[isAirlockReviewCentralized](#isAirlockReviewCentralized) | True     | If true, airlock reviews will take place centralized in the hub. If true, the hub* parameters must be specified also.
+[isAirlockReviewCentralized](#isAirlockReviewCentralized) | False    | If true, airlock reviews will take place centralized in the hub. If true, the hub* parameters must be specified also.
 [airlockApproverEmail](#airlockApproverEmail) | True     | The email address of the reviewer for this project.
-[allowedIngestFileExtensions](#allowedIngestFileExtensions) | True     | The allowed file extensions for ingest.
+[allowedIngestFileExtensions](#allowedIngestFileExtensions) | False    | The allowed file extensions for ingest.
 [centralAirlockStorageAccountId](#centralAirlockStorageAccountId) | True     | The full Azure resource ID of the hub's airlock review storage account.
 [centralAirlockFileShareName](#centralAirlockFileShareName) | True     | The file share name for airlock reviews.
 [centralAirlockKeyVaultId](#centralAirlockKeyVaultId) | True     | The name of the Key Vault in the research hub containing the airlock review storage account's connection string as a secret.
-[publicStorageAccountAllowedIPs](#publicStorageAccountAllowedIPs) | True     | The list of allowed IP addresses or ranges for ingest and approved export pickup purposes.
+[publicStorageAccountAllowedIPs](#publicStorageAccountAllowedIPs) | False    | The list of allowed IP addresses or ranges for ingest and approved export pickup purposes.
 [complianceTarget](#complianceTarget) | False    | The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy a policy assignment.
-[hubManagementVmId](#hubManagementVmId) | True     |
-[hubManagementVmUamiPrincipalId](#hubManagementVmUamiPrincipalId) | True     |
-[hubManagementVmUamiClientId](#hubManagementVmUamiClientId) | True     |
-[debugMode](#debugMode) | True     |
-[debugRemoteIp](#debugRemoteIp) | True     |
+[hubManagementVmId](#hubManagementVmId) | False    |
+[hubManagementVmUamiPrincipalId](#hubManagementVmUamiPrincipalId) | False    |
+[hubManagementVmUamiClientId](#hubManagementVmUamiClientId) | False    |
+[debugMode](#debugMode) | False    |
+[debugRemoteIp](#debugRemoteIp) | False    |
 [debugPrincipalId](#debugPrincipalId) | False    | The object ID of the user or group to assign permissions. Only used when `debugMode = true`.
 
 ### location
@@ -173,7 +173,7 @@ The resource ID of the resource group in the hub subscription where storage acco
 
 ### additionalSubnets
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 The definition of additional subnets that have been manually created.
 
@@ -199,7 +199,7 @@ Name of the Workspace shown to users in the AVD client.
 
 ### createPolicyExemptions
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.
 
@@ -207,7 +207,7 @@ If true, will create policy exemptions for resources and policy definitions that
 
 ### policyAssignmentId
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 Required if policy exemptions must be created.
 
@@ -215,13 +215,13 @@ Required if policy exemptions must be created.
 
 ### sessionHostLocalAdminUsername
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 - Type: `securestring`
 
 ### sessionHostLocalAdminPassword
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 - Type: `securestring`
 
@@ -235,7 +235,7 @@ Specifies if logons to virtual machines should use AD or Entra ID.
 
 ### domainJoinUsername
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 The username of a domain user or service account to use to join the Active Directory domain. Use UPN notation. Required if using AD join.
 
@@ -243,7 +243,7 @@ The username of a domain user or service account to use to join the Active Direc
 
 ### domainJoinPassword
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 The password of the domain user or service account to use to join the Active Directory domain. Required if using AD join.
 
@@ -257,7 +257,7 @@ The password of the domain user or service account to use to join the Active Dir
 
 ### adDomainFqdn
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 The fully qualified DNS name of the Active Directory domain to join. Required if using AD join.
 
@@ -265,7 +265,7 @@ The fully qualified DNS name of the Active Directory domain to join. Required if
 
 ### adOuPath
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 Optional. The OU path in LDAP notation to use when joining the session hosts.
 
@@ -334,7 +334,7 @@ Entra ID object ID of the admin user or group to assign permissions to administe
 
 ### isAirlockReviewCentralized
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 If true, airlock reviews will take place centralized in the hub. If true, the hub* parameters must be specified also.
 
@@ -350,7 +350,7 @@ The email address of the reviewer for this project.
 
 ### allowedIngestFileExtensions
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 The allowed file extensions for ingest.
 
@@ -382,7 +382,7 @@ The name of the Key Vault in the research hub containing the airlock review stor
 
 ### publicStorageAccountAllowedIPs
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 The list of allowed IP addresses or ranges for ingest and approved export pickup purposes.
 
@@ -399,31 +399,31 @@ The Azure built-in regulatory compliance framework to target. This will affect w
 
 ### hubManagementVmId
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 - Type: `string`
 
 ### hubManagementVmUamiPrincipalId
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 - Type: `string`
 
 ### hubManagementVmUamiClientId
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 - Type: `string`
 
 ### debugMode
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 - Type: `bool`
 
 ### debugRemoteIp
 
-![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
 - Type: `string`
 

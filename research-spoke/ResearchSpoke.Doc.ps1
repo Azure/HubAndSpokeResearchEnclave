@@ -14,7 +14,7 @@ function global:GetTemplateParameter {
                 Name         = $property.Name
                 Description  = $property.Value.metadata.description
                 Type         = $property.Value.type
-                Required     = !($property.Value.defaultValue -or $property.Value.nullable)
+                Required     = !("defaultValue" -in $property.Value.PSObject.Properties.Name -or $property.Value.nullable)
                 DefaultValue = $property.Value.defaultValue
             }
         }
