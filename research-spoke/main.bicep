@@ -34,7 +34,7 @@ param deploymentTime string = utcNow()
 param encryptionKeyExpirySeed string = utcNow()
 
 // Network parameters
-@description('Format: [ "192.168.0.0/24", "192.168.10.0/24" ]')
+@description('Format: `[ "192.168.0.0/24", "192.168.10.0/24" ]`')
 @minLength(1)
 param networkAddressSpaces array
 @description('The private IP address of the hub firewall.')
@@ -61,7 +61,7 @@ param workspaceFriendlyName string = 'N/A'
 // @description('The Azure resource ID of the standalone image to use for new session hosts. If blank, will use the Windows 11 23H2 O365 Gen 2 Marketplace image.')
 // param sessionHostVmImageResourceId string = ''
 
-@description('If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.')
+@description('Experimental. If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.')
 param createPolicyExemptions bool = false
 @description('Required if policy exemptions must be created.')
 param policyAssignmentId string = ''

@@ -11,11 +11,26 @@ function global:GetTemplateParameter {
         $template = Get-Content $Path | ConvertFrom-Json;
         foreach ($property in $template.parameters.PSObject.Properties) {
             [PSCustomObject]@{
-                Name         = $property.Name
-                Description  = $property.Value.metadata.description
-                Type         = $property.Value.type
-                Required     = !("defaultValue" -in $property.Value.PSObject.Properties.Name -or $property.Value.nullable)
-                DefaultValue = $property.Value.defaultValue
+                Name          = $property.Name
+                Description   = $property.Value.metadata.description
+                Type          = $property.Value.type
+                Required      = !("defaultValue" -in $property.Value.PSObject.Properties.Name -or $property.Value.nullable)
+                DefaultValue  = if ("defaultValue" -in $property.Value.PSObject.Properties.Name) {
+                    if ($property.Value.defaultValue) { $property.Value.defaultValue } else {
+                        switch ($property.Value.type) {
+                            'string' { '''''' }
+                            'object' { '{ }' }
+                            'array' { '()' }
+                            'bool' { 'false' }
+                            'securestring' { '''''' }
+                        } 
+                    } 
+                }
+                AllowedValues = if ($property.Value.allowedValues) {
+                    "``$($property.Value.allowedValues -join '`, `')``" 
+                }
+                MinLength     = $property.Value.minLength
+                MaxLength     = $property.Value.maxLength
             }
         }
     }
@@ -86,9 +101,33 @@ Document Research-Spoke {
                     "![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)"
                 }
                 $_.Description
-                $Details = "- Type: ``$($_.Type)``"
+                # $Details = "- Type: ``$($_.Type)``"
+                # if ($_.DefaultValue) {
+                #     $Details += "`n- Default value: ``$($_.DefaultValue)``"
+                # }
+                # if ($_.AllowedValues) {
+                #     $Details += "`n- Allowed values: $($_.AllowedValues)"
+                # }
+                # if ($_.MinLength) {
+                #     $Details += "`n- Minimum length: $($_.MinLength)"
+                # }
+                # if ($_.MaxLength) {
+                #     $Details += "`n- Maximum length: $($_.MaxLength)"
+                # }
+                # $Details
+                
+                $Details = "Metadata | Value`n---- | ----`nType | $($_.Type)"
                 if ($_.DefaultValue) {
-                    $Details += "`n- Default value: ``$($_.DefaultValue)``"
+                    $Details += "`nDefault value | ``$($_.DefaultValue)``"
+                }
+                if ($_.AllowedValues) {
+                    $Details += "`nAllowed values | $($_.AllowedValues)"
+                }
+                if ($_.MinLength) {
+                    $Details += "`nMinimum length | $($_.MinLength)"
+                }
+                if ($_.MaxLength) {
+                    $Details += "`nMaximum length | $($_.MaxLength)"
                 }
                 $Details
             }
