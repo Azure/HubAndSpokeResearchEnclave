@@ -89,7 +89,7 @@ resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2023-09-05' = {
 }
 
 // LATER: Add support for session host configuration data
-// resource hostPoolConfigurations 'vdpool/sessionHostConfigurations@2024-01-16-preview' = {
+// resource hostPoolConfigurations 'Microsoft.DesktopVirtualization/hostPools/sessionHostConfigurations@2024-01-16-preview' = {
 //   name: 
 //   properties: {
 //     diskInfo: {
@@ -113,7 +113,7 @@ resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2023-09-05' = {
 //   }
 // }
 
-resource desktopApplicationGroup 'vdag@2023-09-05' =
+resource desktopApplicationGroup 'Microsoft.DesktopVirtualization/applicationGroups@2023-09-05' =
   if (deployDesktopAppGroup) {
     name: replace(namingStructure, '{rtype}', 'dag')
     location: location
@@ -193,12 +193,12 @@ module remoteAppApplicationGroupsModule 'remoteAppApplicationGroup.bicep' = [
 
 var desktopApplicationGroupId = deployDesktopAppGroup ? [desktopApplicationGroup.id] : []
 var expectedRemoteAppApplicationGroupIds = [
-  for appGroup in remoteAppApplicationGroupInfo: '${resourceGroup().id}/providers/vdag/${replace(namingStructure, '{rtype}', appGroup.name)}'
+  for appGroup in remoteAppApplicationGroupInfo: '${resourceGroup().id}/providers/Microsoft.DesktopVirtualization/applicationgroups/${replace(namingStructure, '{rtype}', appGroup.name)}'
 ]
 var allApplicationGroupIds = concat(desktopApplicationGroupId, expectedRemoteAppApplicationGroupIds)
 
 // Create a Azure Virtual Desktop workspace and assign all application groups to it
-resource workspace 'vdws@2023-09-05' = {
+resource workspace 'Microsoft.DesktopVirtualization/workspaces@2023-09-05' = {
   name: replace(namingStructure, '{rtype}', 'ws')
   location: location
   properties: {

@@ -30,7 +30,7 @@ type application = {
  * RESOURCES
  */
 
-resource applicationGroup 'vdag@2023-09-05' = {
+resource applicationGroup 'Microsoft.DesktopVirtualization/applicationGroups@2023-09-05' = {
   name: name
   location: location
   properties: {
@@ -41,7 +41,7 @@ resource applicationGroup 'vdag@2023-09-05' = {
   tags: tags
 }
 
-resource remoteApplications 'vdag/applications@2023-09-05' = [
+resource remoteApplications 'Microsoft.DesktopVirtualization/applicationGroups/applications@2023-09-05' = [
   for app in applications: {
     name: app.name
     parent: applicationGroup
