@@ -67,7 +67,7 @@ var customRdpProperty = '${defaultRdpProperties}${entraIDJoinCustomRdpProperties
  * RESOURCES
  */
 
-resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2023-09-05' = {
+resource vdpool 'Microsoft.DesktopVirtualization/hostPools@2023-09-05' = {
   name: replace(namingStructure, '{rtype}', 'hp')
   location: location
   properties: {
@@ -119,7 +119,7 @@ resource desktopApplicationGroup 'Microsoft.DesktopVirtualization/applicationGro
     location: location
     properties: {
       applicationGroupType: 'Desktop'
-      hostPoolArmPath: hostPool.id
+      hostPoolArmPath: vdpool.id
       // This isn't actually displayed anywhere; just set here for possible future use
       friendlyName: desktopAppGroupFriendlyName
     }
@@ -183,7 +183,7 @@ module remoteAppApplicationGroupsModule 'remoteAppApplicationGroup.bicep' = [
       tags: tags
       applications: appGroup.applications
       friendlyName: appGroup.friendlyName
-      hostPoolId: hostPool.id
+      hostPoolId: vdpool.id
 
       principalId: userObjectId
       roleDefinitionId: roles.DesktopVirtualizationUser
@@ -198,7 +198,7 @@ var expectedRemoteAppApplicationGroupIds = [
 var allApplicationGroupIds = concat(desktopApplicationGroupId, expectedRemoteAppApplicationGroupIds)
 
 // Create a Azure Virtual Desktop workspace and assign all application groups to it
-resource workspace 'Microsoft.DesktopVirtualization/workspaces@2023-09-05' = {
+resource vdws 'Microsoft.DesktopVirtualization/workspaces@2023-09-05' = {
   name: replace(namingStructure, '{rtype}', 'ws')
   location: location
   properties: {
@@ -223,7 +223,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-04-01' =
         {
           name: replace(namingStructure, '{rtype}', 'hp-pep')
           properties: {
-            privateLinkServiceId: hostPool.id
+            privateLinkServiceId: vdpool.id
             groupIds: [
               'connection'
             ]
@@ -249,5 +249,5 @@ resource privateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZ
     }
   }
 
-output hostPoolRegistrationToken string = hostPool.properties.registrationInfo.token
-output hostPoolName string = hostPool.name
+output hostPoolRegistrationToken string = vdpool.properties.registrationInfo.token
+output hostPoolName string = vdpool.name
