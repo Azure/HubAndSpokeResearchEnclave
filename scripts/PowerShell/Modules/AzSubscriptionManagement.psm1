@@ -7,9 +7,9 @@
 Function Set-AzContextWrapper {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory, Position = 1)]
+        [Parameter(Mandatory, Position = 0)]
         [string]$SubscriptionId,
-        [Parameter(Position = 2)]
+        [Parameter(Position = 1)]
         [string]$Environment = 'AzureCloud'
     )
 
