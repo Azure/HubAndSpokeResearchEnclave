@@ -15,52 +15,52 @@ Deploys a research spoke associated with a previously deployed research hub.
 Parameter name | Required | Description
 -------------- | -------- | -----------
 [location](#location) | True     | The Azure region where the spoke will be deployed.
-[workloadName](#workloadName) | True     | The name of the research project for the spoke.
+[workloadName](#workloadname) | True     | The name of the research project for the spoke.
 [environment](#environment) | False    | A maximum four-letter moniker for the environment type, such as 'dev', 'test', etc.
 [tags](#tags)  | False    | Tags to apply to each deployed Azure resource.
 [sequence](#sequence) | False    | The deployment sequence. Each new sequence number will create a new deployment.
-[namingConvention](#namingConvention) | False    | The naming convention to use for Azure resource names. Can contain placeholders for {rtype}, {workloadName}, {location}, {env}, and {seq}. The only supported segment separator is '-'.
-[deploymentTime](#deploymentTime) | False    |
-[encryptionKeyExpirySeed](#encryptionKeyExpirySeed) | False    | The date and time seed for the expiration of the encryption keys.
-[networkAddressSpaces](#networkAddressSpaces) | True     | Format: [ "192.168.0.0/24", "192.168.10.0/24" ]
-[hubFirewallIp](#hubFirewallIp) | True     | The private IP address of the hub firewall.
-[customDnsIps](#customDnsIps) | False    | The DNS IP addresses to use for the virtual network. Defaults to the hub firewall IP.
-[hubVNetResourceId](#hubVNetResourceId) | True     | The Azure resource ID of the hub virtual network to peer with.
-[hubPrivateDnsZonesResourceGroupId](#hubPrivateDnsZonesResourceGroupId) | True     | The resource ID of the resource group in the hub subscription where storage account-related private DNS zones live.
-[additionalSubnets](#additionalSubnets) | False    | The definition of additional subnets that have been manually created.
-[desktopAppGroupFriendlyName](#desktopAppGroupFriendlyName) | False    | Name of the Desktop application group shown to users in the AVD client.
-[workspaceFriendlyName](#workspaceFriendlyName) | False    | Name of the Workspace shown to users in the AVD client.
-[createPolicyExemptions](#createPolicyExemptions) | False    | If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.
-[policyAssignmentId](#policyAssignmentId) | False    | Required if policy exemptions must be created.
-[sessionHostLocalAdminUsername](#sessionHostLocalAdminUsername) | False    |
-[sessionHostLocalAdminPassword](#sessionHostLocalAdminPassword) | False    |
-[logonType](#logonType) | True     | Specifies if logons to virtual machines should use AD or Entra ID.
-[domainJoinUsername](#domainJoinUsername) | False    | The username of a domain user or service account to use to join the Active Directory domain. Use UPN notation. Required if using AD join.
-[domainJoinPassword](#domainJoinPassword) | False    | The password of the domain user or service account to use to join the Active Directory domain. Required if using AD join.
-[filesIdentityType](#filesIdentityType) | True     |
-[adDomainFqdn](#adDomainFqdn) | False    | The fully qualified DNS name of the Active Directory domain to join. Required if using AD join.
-[adOuPath](#adOuPath) | False    | Optional. The OU path in LDAP notation to use when joining the session hosts.
-[storageAccountOuPath](#storageAccountOuPath) | False    | Optional. The OU Path in LDAP notation to use when joining the storage account. Defaults to the same OU as the session hosts.
-[sessionHostCount](#sessionHostCount) | False    | Optional. The number of Azure Virtual Desktop session hosts to create in the pool. Defaults to 1.
-[sessionHostNamePrefix](#sessionHostNamePrefix) | False    | The prefix used for the computer names of the session host(s). Maximum 11 characters.
-[sessionHostSize](#sessionHostSize) | False    | A valid Azure Virtual Machine size. Use `az vm list-sizes --location "<region>"` to retrieve a list for the selected location
-[useSessionHostAsResearchVm](#useSessionHostAsResearchVm) | False    | If true, will configure the deployment of AVD to make the AVD session hosts usable as research VMs. This will give full desktop access, flow the AVD traffic through the firewall, etc.
-[researcherEntraIdObjectId](#researcherEntraIdObjectId) | True     | Entra ID object ID of the user or group (researchers) to assign permissions to access the AVD application groups and storage.
-[adminEntraIdObjectId](#adminEntraIdObjectId) | True     | Entra ID object ID of the admin user or group to assign permissions to administer the AVD session hosts, storage, etc.
-[isAirlockReviewCentralized](#isAirlockReviewCentralized) | False    | If true, airlock reviews will take place centralized in the hub. If true, the hub* parameters must be specified also.
-[airlockApproverEmail](#airlockApproverEmail) | True     | The email address of the reviewer for this project.
-[allowedIngestFileExtensions](#allowedIngestFileExtensions) | False    | The allowed file extensions for ingest.
-[centralAirlockStorageAccountId](#centralAirlockStorageAccountId) | True     | The full Azure resource ID of the hub's airlock review storage account.
-[centralAirlockFileShareName](#centralAirlockFileShareName) | True     | The file share name for airlock reviews.
-[centralAirlockKeyVaultId](#centralAirlockKeyVaultId) | True     | The name of the Key Vault in the research hub containing the airlock review storage account's connection string as a secret.
-[publicStorageAccountAllowedIPs](#publicStorageAccountAllowedIPs) | False    | The list of allowed IP addresses or ranges for ingest and approved export pickup purposes.
-[complianceTarget](#complianceTarget) | False    | The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy a policy assignment.
-[hubManagementVmId](#hubManagementVmId) | False    |
-[hubManagementVmUamiPrincipalId](#hubManagementVmUamiPrincipalId) | False    |
-[hubManagementVmUamiClientId](#hubManagementVmUamiClientId) | False    |
-[debugMode](#debugMode) | False    |
-[debugRemoteIp](#debugRemoteIp) | False    |
-[debugPrincipalId](#debugPrincipalId) | False    | The object ID of the user or group to assign permissions. Only used when `debugMode = true`.
+[namingConvention](#namingconvention) | False    | The naming convention to use for Azure resource names. Can contain placeholders for {rtype}, {workloadName}, {location}, {env}, and {seq}. The only supported segment separator is '-'.
+[deploymentTime](#deploymenttime) | False    | Do not specify. Date and time will be used to create unique deployment names.
+[encryptionKeyExpirySeed](#encryptionkeyexpiryseed) | False    | The date and time seed for the expiration of the encryption keys.
+[networkAddressSpaces](#networkaddressspaces) | True     | Format: `[ "192.168.0.0/24", "192.168.10.0/24" ]`
+[hubFirewallIp](#hubfirewallip) | True     | The private IP address of the hub firewall.
+[customDnsIps](#customdnsips) | False    | The DNS IP addresses to use for the virtual network. Defaults to the hub firewall IP.
+[hubVNetResourceId](#hubvnetresourceid) | True     | The Azure resource ID of the hub virtual network to peer with.
+[hubPrivateDnsZonesResourceGroupId](#hubprivatednszonesresourcegroupid) | True     | The resource ID of the resource group in the hub subscription where storage account-related private DNS zones live.
+[additionalSubnets](#additionalsubnets) | False    | The definition of additional subnets that have been manually created.
+[desktopAppGroupFriendlyName](#desktopappgroupfriendlyname) | False    | Name of the Desktop application group shown to users in the AVD client.
+[workspaceFriendlyName](#workspacefriendlyname) | False    | Name of the Workspace shown to users in the AVD client.
+[createPolicyExemptions](#createpolicyexemptions) | False    | Experimental. If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.
+[policyAssignmentId](#policyassignmentid) | False    | Required if policy exemptions must be created.
+[sessionHostLocalAdminUsername](#sessionhostlocaladminusername) | False    | The username for the local user account on the session hosts. Required if when deploying AVD session hosts in the hub (`useSessionHostAsResearchVm = false`).
+[sessionHostLocalAdminPassword](#sessionhostlocaladminpassword) | False    | The password for the local user account on the session hosts. Required if when deploying AVD session hosts in the hub (`useSessionHostAsResearchVm = false`).
+[logonType](#logontype) | True     | Specifies if logons to virtual machines should use AD or Entra ID.
+[domainJoinUsername](#domainjoinusername) | False    | The username of a domain user or service account to use to join the Active Directory domain. Use UPN notation. Required if using AD join.
+[domainJoinPassword](#domainjoinpassword) | False    | The password of the domain user or service account to use to join the Active Directory domain. Required if using AD join.
+[filesIdentityType](#filesidentitytype) | True     | The identity type to use for Azure Files. Use `AADKERB` for Entra ID Kerberos, `AADDS` for Entra Domain Services, or `None` for ADDS.
+[adDomainFqdn](#addomainfqdn) | False    | The fully qualified DNS name of the Active Directory domain to join. Required if using AD join.
+[adOuPath](#adoupath) | False    | Optional. The OU path in LDAP notation to use when joining the session hosts.
+[storageAccountOuPath](#storageaccountoupath) | False    | Optional. The OU Path in LDAP notation to use when joining the storage account. Defaults to the same OU as the session hosts.
+[sessionHostCount](#sessionhostcount) | False    | Optional. The number of Azure Virtual Desktop session hosts to create in the pool. Defaults to 1.
+[sessionHostNamePrefix](#sessionhostnameprefix) | False    | The prefix used for the computer names of the session host(s). Maximum 11 characters.
+[sessionHostSize](#sessionhostsize) | False    | A valid Azure Virtual Machine size. Use `az vm list-sizes --location "<region>"` to retrieve a list for the selected location
+[useSessionHostAsResearchVm](#usesessionhostasresearchvm) | False    | If true, will configure the deployment of AVD to make the AVD session hosts usable as research VMs. This will give full desktop access, flow the AVD traffic through the firewall, etc.
+[researcherEntraIdObjectId](#researcherentraidobjectid) | True     | Entra ID object ID of the user or group (researchers) to assign permissions to access the AVD application groups and storage.
+[adminEntraIdObjectId](#adminentraidobjectid) | True     | Entra ID object ID of the admin user or group to assign permissions to administer the AVD session hosts, storage, etc.
+[isAirlockReviewCentralized](#isairlockreviewcentralized) | False    | If true, airlock reviews will take place centralized in the hub. If true, the hub* parameters must be specified also.
+[airlockApproverEmail](#airlockapproveremail) | True     | The email address of the reviewer for this project.
+[allowedIngestFileExtensions](#allowedingestfileextensions) | False    | The allowed file extensions for ingest.
+[centralAirlockStorageAccountId](#centralairlockstorageaccountid) | True     | The full Azure resource ID of the hub's airlock review storage account.
+[centralAirlockFileShareName](#centralairlockfilesharename) | True     | The file share name for airlock reviews.
+[centralAirlockKeyVaultId](#centralairlockkeyvaultid) | True     | The name of the Key Vault in the research hub containing the airlock review storage account's connection string as a secret.
+[publicStorageAccountAllowedIPs](#publicstorageaccountallowedips) | False    | The list of allowed IP addresses or ranges for ingest and approved export pickup purposes.
+[complianceTarget](#compliancetarget) | False    | The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy a policy assignment.
+[hubManagementVmId](#hubmanagementvmid) | False    | The Azure resource ID of the management VM in the hub. Required if using AD join for Azure Files (`filesIdentityType = 'None'`). This value is output by the hub deployment.
+[hubManagementVmUamiPrincipalId](#hubmanagementvmuamiprincipalid) | False    | The Entra ID object ID of the user-assigned managed identity of the management VM. This will be given the necessary role assignment to perform a domain join on the storage account(s). Required if using AD join for Azure Files (`filesIdentityType = 'None'`). This value is output by the hub deployment.
+[hubManagementVmUamiClientId](#hubmanagementvmuamiclientid) | False    | The client ID of the user-assigned managed identity of the management VM. Required if using AD join for Azure Files (`filesIdentityType = 'None'`). This value is output by the hub deployment.
+[debugMode](#debugmode) | False    | Set to `true` to enable debug mode of the spoke. Debug mode will allow remote access to storage, etc. Should be not be used for production deployments.
+[debugRemoteIp](#debugremoteip) | False    | Used when `debugMode = true`. The IP address to allow access to storage, Key Vault, etc.
+[debugPrincipalId](#debugprincipalid) | False    | The object ID of the user or group to assign permissions. Only used when `debugMode = true`.
 
 ### location
 
@@ -132,6 +132,8 @@ Default value | `{workloadName}-{subWorkloadName}-{env}-{rtype}-{loc}-{seq}`
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
+Do not specify. Date and time will be used to create unique deployment names.
+
 Metadata | Value
 ---- | ----
 Type | string
@@ -152,7 +154,7 @@ Default value | `[utcNow()]`
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
 
-Format: [ "192.168.0.0/24", "192.168.10.0/24" ]
+Format: `[ "192.168.0.0/24", "192.168.10.0/24" ]`
 
 Metadata | Value
 ---- | ----
@@ -237,7 +239,7 @@ Default value | `N/A`
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
-If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.
+Experimental. If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.
 
 Metadata | Value
 ---- | ----
@@ -259,6 +261,8 @@ Default value | `''`
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
+The username for the local user account on the session hosts. Required if when deploying AVD session hosts in the hub (`useSessionHostAsResearchVm = false`).
+
 Metadata | Value
 ---- | ----
 Type | securestring
@@ -267,6 +271,8 @@ Default value | `''`
 ### sessionHostLocalAdminPassword
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
+
+The password for the local user account on the session hosts. Required if when deploying AVD session hosts in the hub (`useSessionHostAsResearchVm = false`).
 
 Metadata | Value
 ---- | ----
@@ -309,6 +315,8 @@ Default value | `''`
 ### filesIdentityType
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-required-orange?style=flat-square)
+
+The identity type to use for Azure Files. Use `AADKERB` for Entra ID Kerberos, `AADDS` for Entra Domain Services, or `None` for ADDS.
 
 Metadata | Value
 ---- | ----
@@ -502,6 +510,8 @@ Allowed values | `NIST80053R5`, `HIPAAHITRUST`, `CMMC2L2`, `NIST800171R2`
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
+The Azure resource ID of the management VM in the hub. Required if using AD join for Azure Files (`filesIdentityType = 'None'`). This value is output by the hub deployment.
+
 Metadata | Value
 ---- | ----
 Type | string
@@ -510,6 +520,8 @@ Default value | `''`
 ### hubManagementVmUamiPrincipalId
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
+
+The Entra ID object ID of the user-assigned managed identity of the management VM. This will be given the necessary role assignment to perform a domain join on the storage account(s). Required if using AD join for Azure Files (`filesIdentityType = 'None'`). This value is output by the hub deployment.
 
 Metadata | Value
 ---- | ----
@@ -520,6 +532,8 @@ Default value | `''`
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
+The client ID of the user-assigned managed identity of the management VM. Required if using AD join for Azure Files (`filesIdentityType = 'None'`). This value is output by the hub deployment.
+
 Metadata | Value
 ---- | ----
 Type | string
@@ -529,6 +543,8 @@ Default value | `''`
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
+Set to `true` to enable debug mode of the spoke. Debug mode will allow remote access to storage, etc. Should be not be used for production deployments.
+
 Metadata | Value
 ---- | ----
 Type | bool
@@ -537,6 +553,8 @@ Default value | `false`
 ### debugRemoteIp
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
+
+Used when `debugMode = true`. The IP address to allow access to storage, Key Vault, etc.
 
 Metadata | Value
 ---- | ----
@@ -559,11 +577,11 @@ Default value | `[deployer().objectId]`
 Name | Type | Description
 ---- | ---- | -----------
 recoveryServicesVaultId | string | The Azure resource ID of the spoke's Recovery Services Vault. Used in service module templates to add additional resources to the vault.
-vmBackupPolicyName | string |
-diskEncryptionSetId | string |
-computeSubnetId | string |
-computeResourceGroupName | string |
-shortcutTargetPath | string |
+vmBackupPolicyName | string | The name of the backup policy used for Azure VM backups in the spoke.
+diskEncryptionSetId | string | The Azure resource ID of the disk encryption set used for customer-managed key encryption of managed disks in the spoke.
+computeSubnetId | string | The Azure resource ID of the ComputeSubnet.
+computeResourceGroupName | string | The resource group name of the compute resource group.
+shortcutTargetPath | string | The UNC path to the 'shared' file share in the spoke's private storage account.
 
 ## Use the template
 

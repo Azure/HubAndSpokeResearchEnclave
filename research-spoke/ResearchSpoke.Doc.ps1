@@ -90,7 +90,7 @@ Document Research-Spoke {
 
     # Add each parameter to a table
     Section 'Parameters' {
-        $parameters | Table -Property @{ Name = 'Parameter name'; Expression = { "[$($_.Name)](#$($_.Name))" } }, Required, Description
+        $parameters | Table -Property @{ Name = 'Parameter name'; Expression = { "[$($_.Name)](#$($_.Name.ToLower()))" } }, Required, Description
 
         $parameters | ForEach-Object { 
             Section $_.Name {
@@ -101,20 +101,6 @@ Document Research-Spoke {
                     "![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)"
                 }
                 $_.Description
-                # $Details = "- Type: ``$($_.Type)``"
-                # if ($_.DefaultValue) {
-                #     $Details += "`n- Default value: ``$($_.DefaultValue)``"
-                # }
-                # if ($_.AllowedValues) {
-                #     $Details += "`n- Allowed values: $($_.AllowedValues)"
-                # }
-                # if ($_.MinLength) {
-                #     $Details += "`n- Minimum length: $($_.MinLength)"
-                # }
-                # if ($_.MaxLength) {
-                #     $Details += "`n- Maximum length: $($_.MaxLength)"
-                # }
-                # $Details
                 
                 $Details = "Metadata | Value`n---- | ----`nType | $($_.Type)"
                 if ($_.DefaultValue) {

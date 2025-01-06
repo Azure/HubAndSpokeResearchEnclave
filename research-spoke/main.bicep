@@ -28,6 +28,7 @@ param sequence int = 1
 @description('The naming convention to use for Azure resource names. Can contain placeholders for {rtype}, {workloadName}, {location}, {env}, and {seq}. The only supported segment separator is \'-\'.')
 param namingConvention string = '{workloadName}-{subWorkloadName}-{env}-{rtype}-{loc}-{seq}'
 
+@description('Do not specify. Date and time will be used to create unique deployment names.')
 param deploymentTime string = utcNow()
 
 @description('The date and time seed for the expiration of the encryption keys.')
@@ -66,8 +67,10 @@ param createPolicyExemptions bool = false
 @description('Required if policy exemptions must be created.')
 param policyAssignmentId string = ''
 
+@description('The username for the local user account on the session hosts. Required if when deploying AVD session hosts in the hub (`useSessionHostAsResearchVm = false`).')
 @secure()
 param sessionHostLocalAdminUsername string = ''
+@description('The password for the local user account on the session hosts. Required if when deploying AVD session hosts in the hub (`useSessionHostAsResearchVm = false`).')
 @secure()
 param sessionHostLocalAdminPassword string = ''
 @description('Specifies if logons to virtual machines should use AD or Entra ID.')
@@ -80,6 +83,7 @@ param domainJoinUsername string = ''
 @secure()
 param domainJoinPassword string = ''
 
+@description('The identity type to use for Azure Files. Use `AADKERB` for Entra ID Kerberos, `AADDS` for Entra Domain Services, or `None` for ADDS.')
 @allowed(['AADKERB', 'AADDS', 'None'])
 param filesIdentityType string
 
@@ -132,11 +136,16 @@ param publicStorageAccountAllowedIPs array = []
 // Default to the strictest supported compliance framework
 param complianceTarget string = 'NIST80053R5'
 
+@description('The Azure resource ID of the management VM in the hub. Required if using AD join for Azure Files (`filesIdentityType = \'None\'`). This value is output by the hub deployment.')
 param hubManagementVmId string = ''
+@description('The Entra ID object ID of the user-assigned managed identity of the management VM. This will be given the necessary role assignment to perform a domain join on the storage account(s). Required if using AD join for Azure Files (`filesIdentityType = \'None\'`). This value is output by the hub deployment.')
 param hubManagementVmUamiPrincipalId string = ''
+@description('The client ID of the user-assigned managed identity of the management VM. Required if using AD join for Azure Files (`filesIdentityType = \'None\'`). This value is output by the hub deployment.')
 param hubManagementVmUamiClientId string = ''
 
+@description('Set to `true` to enable debug mode of the spoke. Debug mode will allow remote access to storage, etc. Should be not be used for production deployments.')
 param debugMode bool = false
+@description('Used when `debugMode = true`. The IP address to allow access to storage, Key Vault, etc.')
 param debugRemoteIp string = ''
 @description('The object ID of the user or group to assign permissions. Only used when `debugMode = true`.')
 param debugPrincipalId string = az.deployer().objectId
@@ -678,11 +687,17 @@ resource avdConnectionPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-
 
 @description('The Azure resource ID of the spoke\'s Recovery Services Vault. Used in service module templates to add additional resources to the vault.')
 output recoveryServicesVaultId string = recoveryServicesVaultModule.outputs.id
+@description('The name of the backup policy used for Azure VM backups in the spoke.')
 output vmBackupPolicyName string = recoveryServicesVaultModule.outputs.vmBackupPolicyName
+@description('The Azure resource ID of the disk encryption set used for customer-managed key encryption of managed disks in the spoke.')
 output diskEncryptionSetId string = diskEncryptionSetModule.outputs.id
+@description('The Azure resource ID of the ComputeSubnet.')
 output computeSubnetId string = networkModule.outputs.createdSubnets.computeSubnet.id
+@description('The resource group name of the compute resource group.')
 output computeResourceGroupName string = computeRg.name
+
 // Double up the \ in the output so it can be pasted easily into a bicepparam file
+@description('The UNC path to the \'shared\' file share in the spoke\'s private storage account.')
 output shortcutTargetPath string = replace(
   '${storageModule.outputs.storageAccountFileShareBaseUncPath}${fileShareNames.shared}',
   '\\',
