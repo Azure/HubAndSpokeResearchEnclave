@@ -56,9 +56,9 @@ Function Set-AzContextWrapper {
 Function Register-AzProviderFeatureWrapper {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory, Position = 1)]
+        [Parameter(Mandatory, Position = 0)]
         [string]$ProviderNamespace,
-        [Parameter(Mandatory, Position = 2)]
+        [Parameter(Mandatory, Position = 1)]
         [string]$FeatureName
     )
 
@@ -115,7 +115,7 @@ Function Register-AzProviderFeatureWrapper {
 Function Register-AzResourceProviderWrapper {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory, Position = 1)]
+        [Parameter(Mandatory, Position = 0)]
         [string]$ProviderNamespace
     )
 
