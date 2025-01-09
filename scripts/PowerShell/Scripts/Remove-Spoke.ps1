@@ -218,10 +218,10 @@ try {
         Write-Warning "The value found in the parameter file for 'hubVNetResourceId' ('$HubVirtualNetworkId') is not a valid Azure virtual network resource ID."
     }
 
-    Write-Host "🔥 Script completed successfully!"
+    Write-Host "`n🔥 Script completed successfully!"
 }
 catch {
-    Write-Host "❌ An error occurred: $($_)"
+    Write-Host "`n❌ An error occurred: $($_)"
     Write-Host $_.ScriptStackTrace
     Write-Host "In context $AzContext"
 }
