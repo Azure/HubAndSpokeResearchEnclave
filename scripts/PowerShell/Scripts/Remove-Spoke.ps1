@@ -33,13 +33,13 @@
 
 [CmdletBinding(SupportsShouldProcess = $true)]
 param (
-    [Parameter(Mandatory, Position = 1)]
+    [Parameter(Mandatory, Position = 0)]
     [string]$TemplateParameterFile,
-    [Parameter(Mandatory, Position = 2)]
+    [Parameter(Mandatory, Position = 1)]
     [string]$TargetSubscriptionId,
-    [Parameter(Position = 3)]
+    [Parameter(Position = 2)]
     [string]$CloudEnvironment = 'AzureCloud',
-    [Parameter(Position = 4)]
+    [Parameter(Position = 3)]
     [string]$Tenant = (Get-AzContext).Tenant.Id,
     [Parameter()]
     [switch]$Force
