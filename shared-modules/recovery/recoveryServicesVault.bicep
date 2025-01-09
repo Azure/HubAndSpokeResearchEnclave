@@ -190,6 +190,9 @@ resource backupConfig 'Microsoft.RecoveryServices/vaults/backupconfig@2024-04-01
 }
 
 // Break up the naming convention on the sequence placeholder to use for the backup RG name
+// The "n" in the backup resource group is another sequence number determined by Azure Backup
+// The end result is that the backup resource group name will be contain "{seq}-n" where
+// other resource group names will have "{seq}
 var processNamingConventionPlaceholders = replace(
   replace(
     replace(
