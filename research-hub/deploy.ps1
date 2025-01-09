@@ -30,13 +30,13 @@
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory, Position = 1)]
+    [Parameter(Mandatory, Position = 0)]
     [string]$TemplateParameterFile,
-    [Parameter(Mandatory, Position = 2)]
+    [Parameter(Mandatory, Position = 1)]
     [string]$TargetSubscriptionId,
-    [Parameter(Mandatory, Position = 3)]
+    [Parameter(Mandatory, Position = 2)]
     [string]$Location,
-    [Parameter(Position = 4)]
+    [Parameter(Position = 3)]
     [string]$Environment = 'AzureCloud'
 )
 

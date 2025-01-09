@@ -28,15 +28,15 @@
 
 [CmdletBinding()]
 Param(
-    [Parameter(Position = 1)]
+    [Parameter(Position = 0)]
     [string]$TemplateParameterFile = './main.bicepparam',
-    [Parameter(Mandatory, Position = 2)]
+    [Parameter(Mandatory, Position = 1)]
     [string]$TargetSubscriptionId,
-    [Parameter(Mandatory, Position = 3)]
+    [Parameter(Mandatory, Position = 2)]
     [string]$Location,
-    [Parameter(Mandatory, Position = 4)]
+    [Parameter(Mandatory, Position = 3)]
     [string]$ResourceGroupName,
-    [Parameter(Position = 5)]
+    [Parameter(Position = 4)]
     [string]$Environment = 'AzureCloud',
     [string]$TemplateFile = './main.bicep'
 )
