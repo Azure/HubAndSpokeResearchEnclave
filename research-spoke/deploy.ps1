@@ -28,8 +28,7 @@
     ./deploy.ps1 '.\main.prj.bicepparam' '00000000-0000-0000-0000-000000000000' 'eastus'
 #>
 
-# LATER: Be more specific about the required modules; it will speed up the initial call
-#Requires -Modules "Az"
+#Requires -Modules Az.Resources
 #Requires -PSEdition Core
 
 [CmdletBinding()]
@@ -86,7 +85,7 @@ $DeploymentResult = New-AzDeployment @CmdLetParameters
 if ($DeploymentResult.ProvisioningState -eq 'Succeeded') {
     Write-Host "🔥 Deployment succeeded."
 
-    if($DeleteJsonParameterFileAfterDeployment) {
+    if ($DeleteJsonParameterFileAfterDeployment) {
         Write-Verbose "Deleting template parameter JSON file '$TemplateParameterJsonFile'."
         Remove-Item -Path $TemplateParameterJsonFile -Force
     }

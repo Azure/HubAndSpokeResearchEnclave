@@ -3,7 +3,9 @@
  * Missing:
  * - SQL Managed Instance: requires knowing the DNS prefix of the SQL MI.
  * - Azure Batch, AKS, ACR, Recovery Services Vaults, Azure File Sync, ADX: requires knowing the region.
+     TODO: Add region placeholder for these zones and dynamically replace at runtime (per ALZ model).
  * - Static Web Apps: Requires knowing the partition ID.
+     TODO: See ALZ approach.
  */
 {
   "AzureCloud": [

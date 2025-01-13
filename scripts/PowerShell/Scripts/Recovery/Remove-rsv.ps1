@@ -5,7 +5,9 @@ param (
 	[Parameter(Mandatory)]
 	[string]$ResourceGroup,
 	[Parameter(Mandatory)]
-	[string]$SubscriptionId
+	[string]$SubscriptionId,
+	[Parameter()]
+	[string]$Tenant = (Get-AzContext).Tenant.Id
 )
 
 # LATER: Add PS version check (7)
@@ -28,9 +30,11 @@ if ($NWversion -lt "4.15.0") {
 	Install-Module -Name Az.Network -Repository PSGallery -Force -AllowClobber
 }
 
-Select-AzSubscription $SubscriptionId
+Select-AzSubscription $SubscriptionId -Tenant $Tenant | Out-Null
 $VaultToDelete = Get-AzRecoveryServicesVault -Name $VaultName -ResourceGroupName $ResourceGroup
-Set-AzRecoveryServicesAsrVaultContext -Vault $VaultToDelete
+# Ignore WhatIfPreference here because future cmdlets will fail without this being set
+# This should have no side effects
+Set-AzRecoveryServicesAsrVaultContext -Vault $VaultToDelete -WhatIf:$false
 
 $UpdatedVault = Update-AzRecoveryServicesVault -ResourceGroupName $VaultToDelete.ResourceGroupName -Name $VaultToDelete.Name -ImmutabilityState "Disabled"
 Write-Host "Immutability state set to $($UpdatedVault.Properties.ImmutabilitySettings.ImmutabilityState)"
@@ -147,11 +151,11 @@ if ($null -ne $fabricObjects) {
 		}
 		$NetworkObjects = Get-AzRecoveryServicesAsrNetwork -Fabric $fabricObject
 		foreach ($networkObject in $NetworkObjects) {
-			#Get the PrimaryNetwork
+			# Get the PrimaryNetwork
 			$PrimaryNetwork = Get-AzRecoveryServicesAsrNetwork -Fabric $fabricObject -FriendlyName $networkObject
 			$NetworkMappings = Get-AzRecoveryServicesAsrNetworkMapping -Network $PrimaryNetwork
 			foreach ($networkMappingObject in $NetworkMappings) {
-				#Get the Neetwork Mappings
+				# Get the Network Mappings
 				$NetworkMapping = Get-AzRecoveryServicesAsrNetworkMapping -Name $networkMappingObject.Name -Network $PrimaryNetwork
 				Remove-AzRecoveryServicesAsrNetworkMapping -InputObject $NetworkMapping
 			}
@@ -171,7 +175,7 @@ foreach ($item in $pvtendpoints) {
 }
 Write-Host "Removed Private Endpoints"
 
-#Recheck ASR items in vault
+# Recheck ASR items in vault
 $fabricCount = 0
 $ASRProtectedItems = 0
 $ASRPolicyMappings = 0
@@ -192,6 +196,7 @@ if ($null -ne $fabricObjects) {
 		$fabricCount++
 	}
 }
+
 #Recheck presence of backup items in vault
 $backupItemsVMFin = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureVM -WorkloadType AzureVM -VaultId $VaultToDelete.ID
 $backupItemsSQLFin = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureWorkload -WorkloadType MSSQL -VaultId $VaultToDelete.ID
@@ -223,17 +228,27 @@ if ($ASRPolicyMappings -ne 0) { Write-Host $ASRPolicyMappings "ASR policy mappin
 if ($fabricCount -ne 0) { Write-Host $fabricCount "ASR Fabrics are still present in the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
 if ($pvtendpointsFin.count -ne 0) { Write-Host $pvtendpointsFin.count "Private endpoints are still linked to the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
 
-$accesstoken = Get-AzAccessToken -AsSecureString
-$token = $accesstoken.Token
-$authHeader = @{
-	'Content-Type'  = 'application/json'
-	'Authorization' = 'Bearer ' + (ConvertFrom-SecureString $token -AsPlainText)
-}
-$restUri = "https://management.azure.com//subscriptions/" + $SubscriptionId + '/resourcegroups/' + $ResourceGroup + '/providers/Microsoft.RecoveryServices/vaults/' + $VaultName + '?api-version=2021-06-01&operation=DeleteVaultUsingPS'
-$response = Invoke-RestMethod -Uri $restUri -Headers $authHeader -Method DELETE
+if ($PSCmdlet.ShouldProcess($VaultName, "DELETE")) {
+	$RestMethodParameters = @{
+		Method               = 'DELETE'
+		SubscriptionId       = $SubscriptionId
+		ResourceGroupName    = $ResourceGroup
+		ResourceProviderName = 'Microsoft.RecoveryServices'
+		ResourceType         = 'vaults'
+		Name                 = $VaultName
+		ApiVersion           = '2024-04-01'
+	}
 
-$VaultDeleted = Get-AzRecoveryServicesVault -Name $VaultName -ResourceGroupName $ResourceGroup -erroraction 'silentlycontinue'
-if ($null -eq $VaultDeleted) {
-	Write-Host "Recovery Services Vault" $VaultName "successfully deleted"
-}
+	$Response = Invoke-AzRestMethod @RestMethodParameters
+	
+	Write-Verbose "DELETE HTTP request returned status code: $($Response.StatusCode)"
 
+	$VaultDeleted = Get-AzRecoveryServicesVault -Name $VaultName -ResourceGroupName $ResourceGroup -ErrorAction 'SilentlyContinue'
+
+	if ($null -eq $VaultDeleted) {
+		Write-Host "Recovery Services Vault '$VaultName' successfully deleted."
+	}
+	else {
+		Write-Error "Recovery Services Vault '$VaultName' was not successfully deleted. Status code: $($Response.StatusCode)."
+	}
+}
