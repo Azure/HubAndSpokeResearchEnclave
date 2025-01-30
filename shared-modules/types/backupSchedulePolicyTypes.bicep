@@ -1,6 +1,6 @@
 @export()
 type iaasSchedulePolicyType = {
-  schedulePolicyType: schedulePolicyType
+  schedulePolicyType: schedulePolicyType | 'SimpleSchedulePolicyV2'
   scheduleRunFrequency: scheduleRuleFrequency | 'Weekly'
 
   hourlySchedule: hourlySchedule?
@@ -22,7 +22,7 @@ type fileShareSchedulePolicyType = {
   dailySchedule: dailySchedule?
 
   scheduleRunDays: scheduleRunDays?
-  scheduleRunTimes: string[]
+  scheduleRunTimes: string[]?
 }
 
 type hourlySchedule = {
@@ -42,4 +42,4 @@ type weeklySchedule = {
 
 type scheduleRunDays = ('Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday')[]
 type scheduleRuleFrequency = 'Hourly' | 'Daily'
-type schedulePolicyType = 'SimpleSchedulePolicy' | 'SimpleSchedulePolicyV2'
+type schedulePolicyType = 'SimpleSchedulePolicy'
