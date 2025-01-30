@@ -10,6 +10,9 @@
 
 #Requires -Modules platyPS, Az.Resources, PSDocs
 
+[CmdletBinding()]
+param ()
+
 # Generate markdown help for the AzSubscriptionManagement module using platyPS
 try {
     Import-Module platyPS
