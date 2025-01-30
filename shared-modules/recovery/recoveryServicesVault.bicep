@@ -16,13 +16,6 @@ param location string = resourceGroup().location
 param tags object
 param storageType string = 'GeoRedundant'
 
-param retentionBackupTime string
-param dailyRetentionDurationCount int = 8
-param weeklyRetentionDurationCount int = 6
-param monthlyRetentionDurationCount int = 13
-param weeklyRetentionDays ('Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday')[] = [
-  'Sunday'
-]
 param timeZone string
 
 param protectedStorageAccountId string
@@ -35,46 +28,7 @@ param vmSchedulePolicy schedulePolicyTypes.iaasSchedulePolicyType
 param fileShareSchedulePolicy schedulePolicyTypes.fileShareSchedulePolicyType
 
 @description('The retention policy used for all custom backup policies.')
-param retentionPolicy object = {
-  retentionPolicyType: 'LongTermRetentionPolicy'
-
-  dailySchedule: {
-    retentionTimes: [retentionBackupTime]
-    retentionDuration: {
-      count: dailyRetentionDurationCount
-      durationType: 'Days'
-    }
-  }
-
-  weeklySchedule: {
-    daysOfTheWeek: weeklyRetentionDays
-    retentionTimes: [retentionBackupTime]
-    retentionDuration: {
-      count: weeklyRetentionDurationCount
-      durationType: 'Weeks'
-    }
-  }
-
-  monthlySchedule: {
-    retentionScheduleFormatType: 'Daily'
-    retentionScheduleDaily: {
-      daysOfTheMonth: [
-        {
-          date: 1
-          isLast: false
-        }
-      ]
-    }
-    retentionTimes: [retentionBackupTime]
-    retentionDuration: {
-      count: monthlyRetentionDurationCount
-      durationType: 'Months'
-    }
-    retentionScheduleWeekly: null
-  }
-
-  yearlySchedule: null
-}
+param retentionPolicy object
 
 var vaultName = replace(namingStructure, '{rtype}', 'rsv')
 

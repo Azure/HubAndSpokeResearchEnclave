@@ -57,6 +57,7 @@ Parameter name | Required | Description
 [complianceTarget](#compliancetarget) | False    | The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy any policy assignments.
 [vmSchedulePolicy](#vmschedulepolicy) | False    | The backup schedule policy for virtual machines. Defaults to every four hours starting at midnight each day. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).
 [fileShareSchedulePolicy](#fileshareschedulepolicy) | False    | The backup schedule policy for Azure File Shares. Defaults to daily at the retention time. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).
+[backupRetentionPolicy](#backupretentionpolicy) | False    | The retention policy for all backup policies. Defaults to 8 days of daily backups, 6 weeks of weekly backups, and 13 months of monthly backups.
 [backupSchedulePolicyTimeZone](#backupschedulepolicytimezone) | False    | The time zone to use for the backup schedule policy.
 [retentionBackupTime](#retentionbackuptime) | False    | In case of Hourly backup schedules, this retention time must be set to the time of one of the hourly backups.
 [hubManagementVmId](#hubmanagementvmid) | False    | The Azure resource ID of the management VM in the hub. Required if using AD join for Azure Files (`filesIdentityType = 'None'`). This value is output by the hub deployment.
@@ -531,6 +532,17 @@ Metadata | Value
 ---- | ----
 Type | 
 Default value | `@{schedulePolicyType=SimpleSchedulePolicy; scheduleRunFrequency=Daily; scheduleRunDays=; scheduleRunTimes=System.Object[]}`
+
+### backupRetentionPolicy
+
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
+
+The retention policy for all backup policies. Defaults to 8 days of daily backups, 6 weeks of weekly backups, and 13 months of monthly backups.
+
+Metadata | Value
+---- | ----
+Type | object
+Default value | `@{retentionPolicyType=LongTermRetentionPolicy; dailySchedule=; weeklySchedule=; monthlySchedule=; yearlySchedule=}`
 
 ### backupSchedulePolicyTimeZone
 

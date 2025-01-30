@@ -143,7 +143,7 @@ param vmSchedulePolicy schedulePolicyTypes.iaasSchedulePolicyType = {
   hourlySchedule: {
     interval: 4
     scheduleWindowStartTime: '00:00'
-    scheduleWindowDuration: 24
+    scheduleWindowDuration: 23
   }
   dailySchedule: null
   weeklySchedule: null
@@ -155,6 +155,48 @@ param fileShareSchedulePolicy schedulePolicyTypes.fileShareSchedulePolicyType = 
   scheduleRunFrequency: 'Daily'
   scheduleRunDays: null
   scheduleRunTimes: [retentionBackupTime]
+}
+
+@description('The retention policy for all backup policies. Defaults to 8 days of daily backups, 6 weeks of weekly backups, and 13 months of monthly backups.')
+param backupRetentionPolicy object = {
+  retentionPolicyType: 'LongTermRetentionPolicy'
+
+  dailySchedule: {
+    retentionTimes: [retentionBackupTime]
+    retentionDuration: {
+      count: 8
+      durationType: 'Days'
+    }
+  }
+
+  weeklySchedule: {
+    daysOfTheWeek: 'Sunday'
+    retentionTimes: [retentionBackupTime]
+    retentionDuration: {
+      count: 6
+      durationType: 'Weeks'
+    }
+  }
+
+  monthlySchedule: {
+    retentionScheduleFormatType: 'Daily'
+    retentionScheduleDaily: {
+      daysOfTheMonth: [
+        {
+          date: 1
+          isLast: false
+        }
+      ]
+    }
+    retentionTimes: [retentionBackupTime]
+    retentionDuration: {
+      count: 13
+      durationType: 'Months'
+    }
+    retentionScheduleWeekly: null
+  }
+
+  yearlySchedule: null
 }
 
 @description('The time zone to use for the backup schedule policy.')
@@ -704,7 +746,7 @@ module recoveryServicesVaultModule '../shared-modules/recovery/recoveryServicesV
     fileShareSchedulePolicy: fileShareSchedulePolicy
     vmSchedulePolicy: vmSchedulePolicy
 
-    retentionBackupTime: retentionBackupTime
+    retentionPolicy: backupRetentionPolicy
   }
 }
 
