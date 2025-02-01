@@ -126,7 +126,7 @@ param centralAirlockKeyVaultId string
 @description('The list of allowed IP addresses or ranges for ingest and approved export pickup purposes.')
 param publicStorageAccountAllowedIPs array = []
 
-@description('The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy a policy assignment.')
+@description('The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy any policy assignments.')
 @allowed([
   'NIST80053R5'
   'HIPAAHITRUST'
@@ -135,6 +135,75 @@ param publicStorageAccountAllowedIPs array = []
 ])
 // Default to the strictest supported compliance framework
 param complianceTarget string = 'NIST80053R5'
+
+@description('The backup schedule policy for virtual machines. Defaults to every four hours starting at midnight each day. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).')
+param vmSchedulePolicy schedulePolicyTypes.iaasSchedulePolicyType = {
+  schedulePolicyType: 'SimpleSchedulePolicyV2'
+  scheduleRunFrequency: 'Hourly'
+  hourlySchedule: {
+    interval: 4
+    scheduleWindowStartTime: '00:00'
+    scheduleWindowDuration: 23
+  }
+  dailySchedule: null
+  weeklySchedule: null
+}
+
+@description('The backup schedule policy for Azure File Shares. Defaults to daily at the retention time. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).')
+param fileShareSchedulePolicy schedulePolicyTypes.fileShareSchedulePolicyType = {
+  schedulePolicyType: 'SimpleSchedulePolicy'
+  scheduleRunFrequency: 'Daily'
+  scheduleRunDays: null
+  scheduleRunTimes: [retentionBackupTime]
+}
+
+@description('The retention policy for all backup policies. Defaults to 8 days of daily backups, 6 weeks of weekly backups, and 13 months of monthly backups.')
+param backupRetentionPolicy object = {
+  retentionPolicyType: 'LongTermRetentionPolicy'
+
+  dailySchedule: {
+    retentionTimes: [retentionBackupTime]
+    retentionDuration: {
+      count: 8
+      durationType: 'Days'
+    }
+  }
+
+  weeklySchedule: {
+    daysOfTheWeek: 'Sunday'
+    retentionTimes: [retentionBackupTime]
+    retentionDuration: {
+      count: 6
+      durationType: 'Weeks'
+    }
+  }
+
+  monthlySchedule: {
+    retentionScheduleFormatType: 'Daily'
+    retentionScheduleDaily: {
+      daysOfTheMonth: [
+        {
+          date: 1
+          isLast: false
+        }
+      ]
+    }
+    retentionTimes: [retentionBackupTime]
+    retentionDuration: {
+      count: 13
+      durationType: 'Months'
+    }
+    retentionScheduleWeekly: null
+  }
+
+  yearlySchedule: null
+}
+
+@description('The time zone to use for the backup schedule policy.')
+param backupSchedulePolicyTimeZone string = 'UTC'
+
+@description('In case of Hourly backup schedules, this retention time must be set to the time of one of the hourly backups.')
+param retentionBackupTime string = '2023-12-31T08:00:00.000Z'
 
 @description('The Azure resource ID of the management VM in the hub. Required if using AD join for Azure Files (`filesIdentityType = \'None\'`). This value is output by the hub deployment.')
 param hubManagementVmId string = ''
@@ -151,6 +220,13 @@ param debugRemoteIp string = ''
 param debugPrincipalId string = az.deployer().objectId
 
 //----------------------------- END PARAMETERS -----------------------------
+
+//----------------------------- START TYPES --------------------------------
+
+import * as schedulePolicyTypes from '../shared-modules/types/backupSchedulePolicyTypes.bicep'
+import { roleAssignmentType } from '../shared-modules/types/roleAssignment.bicep'
+
+//----------------------------- END TYPES ----------------------------------
 
 //----------------------------- START VARIABLES ----------------------------
 
@@ -399,8 +475,6 @@ module diskEncryptionSetModule '../shared-modules/security/diskEncryptionSet.bic
 var hubManagementVmSubscriptionId = !empty(hubManagementVmId) ? split(hubManagementVmId, '/')[2] : ''
 var hubManagementVmResourceGroupName = !empty(hubManagementVmId) ? split(hubManagementVmId, '/')[4] : ''
 var hubManagementVmName = !empty(hubManagementVmId) ? split(hubManagementVmId, '/')[8] : ''
-
-import { roleAssignmentType } from '../shared-modules/types/roleAssignment.bicep'
 
 // Create a role assignment representation for researchers to see the storage accounts
 var storageAccountReaderRoleAssignmentForResearcherGroup = {
@@ -662,12 +736,17 @@ module recoveryServicesVaultModule '../shared-modules/recovery/recoveryServicesV
     keyVaultResourceGroupName: keyVaultModule.outputs.resourceGroupName
     keyVaultName: keyVaultModule.outputs.keyVaultName
 
-    timeZone: 'Central Standard Time'
+    timeZone: backupSchedulePolicyTimeZone
 
     protectedStorageAccountId: storageModule.outputs.storageAccountId
     protectedAzureFileShares: [
       fileShareNames.shared
     ]
+
+    fileShareSchedulePolicy: fileShareSchedulePolicy
+    vmSchedulePolicy: vmSchedulePolicy
+
+    retentionPolicy: backupRetentionPolicy
   }
 }
 

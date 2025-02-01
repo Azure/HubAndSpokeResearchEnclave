@@ -54,7 +54,12 @@ Parameter name | Required | Description
 [centralAirlockFileShareName](#centralairlockfilesharename) | True     | The file share name for airlock reviews.
 [centralAirlockKeyVaultId](#centralairlockkeyvaultid) | True     | The name of the Key Vault in the research hub containing the airlock review storage account's connection string as a secret.
 [publicStorageAccountAllowedIPs](#publicstorageaccountallowedips) | False    | The list of allowed IP addresses or ranges for ingest and approved export pickup purposes.
-[complianceTarget](#compliancetarget) | False    | The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy a policy assignment.
+[complianceTarget](#compliancetarget) | False    | The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy any policy assignments.
+[vmSchedulePolicy](#vmschedulepolicy) | False    | The backup schedule policy for virtual machines. Defaults to every four hours starting at midnight each day. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).
+[fileShareSchedulePolicy](#fileshareschedulepolicy) | False    | The backup schedule policy for Azure File Shares. Defaults to daily at the retention time. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).
+[backupRetentionPolicy](#backupretentionpolicy) | False    | The retention policy for all backup policies. Defaults to 8 days of daily backups, 6 weeks of weekly backups, and 13 months of monthly backups.
+[backupSchedulePolicyTimeZone](#backupschedulepolicytimezone) | False    | The time zone to use for the backup schedule policy.
+[retentionBackupTime](#retentionbackuptime) | False    | In case of Hourly backup schedules, this retention time must be set to the time of one of the hourly backups.
 [hubManagementVmId](#hubmanagementvmid) | False    | The Azure resource ID of the management VM in the hub. Required if using AD join for Azure Files (`filesIdentityType = 'None'`). This value is output by the hub deployment.
 [hubManagementVmUamiPrincipalId](#hubmanagementvmuamiprincipalid) | False    | The Entra ID object ID of the user-assigned managed identity of the management VM. This will be given the necessary role assignment to perform a domain join on the storage account(s). Required if using AD join for Azure Files (`filesIdentityType = 'None'`). This value is output by the hub deployment.
 [hubManagementVmUamiClientId](#hubmanagementvmuamiclientid) | False    | The client ID of the user-assigned managed identity of the management VM. Required if using AD join for Azure Files (`filesIdentityType = 'None'`). This value is output by the hub deployment.
@@ -498,13 +503,68 @@ Default value | `()`
 
 ![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
 
-The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy a policy assignment.
+The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy any policy assignments.
 
 Metadata | Value
 ---- | ----
 Type | string
 Default value | `NIST80053R5`
 Allowed values | `NIST80053R5`, `HIPAAHITRUST`, `CMMC2L2`, `NIST800171R2`
+
+### vmSchedulePolicy
+
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
+
+The backup schedule policy for virtual machines. Defaults to every four hours starting at midnight each day. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).
+
+Metadata | Value
+---- | ----
+Type | 
+Default value | `@{schedulePolicyType=SimpleSchedulePolicyV2; scheduleRunFrequency=Hourly; hourlySchedule=; dailySchedule=; weeklySchedule=}`
+
+### fileShareSchedulePolicy
+
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
+
+The backup schedule policy for Azure File Shares. Defaults to daily at the retention time. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).
+
+Metadata | Value
+---- | ----
+Type | 
+Default value | `@{schedulePolicyType=SimpleSchedulePolicy; scheduleRunFrequency=Daily; scheduleRunDays=; scheduleRunTimes=System.Object[]}`
+
+### backupRetentionPolicy
+
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
+
+The retention policy for all backup policies. Defaults to 8 days of daily backups, 6 weeks of weekly backups, and 13 months of monthly backups.
+
+Metadata | Value
+---- | ----
+Type | object
+Default value | `@{retentionPolicyType=LongTermRetentionPolicy; dailySchedule=; weeklySchedule=; monthlySchedule=; yearlySchedule=}`
+
+### backupSchedulePolicyTimeZone
+
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
+
+The time zone to use for the backup schedule policy.
+
+Metadata | Value
+---- | ----
+Type | string
+Default value | `UTC`
+
+### retentionBackupTime
+
+![Parameter Setting](https://img.shields.io/badge/parameter-optional-green?style=flat-square)
+
+In case of Hourly backup schedules, this retention time must be set to the time of one of the hourly backups.
+
+Metadata | Value
+---- | ----
+Type | string
+Default value | `12/31/2023 08:00:00`
 
 ### hubManagementVmId
 

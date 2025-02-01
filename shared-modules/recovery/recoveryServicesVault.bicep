@@ -16,84 +16,23 @@ param location string = resourceGroup().location
 param tags object
 param storageType string = 'GeoRedundant'
 
-param backupTime string = '2023-12-31T08:00:00.000Z'
-param dailyRetentionDurationCount int = 8
-param weeklyRetentionDurationCount int = 6
-param monthlyRetentionDurationCount int = 13
-param weeklyRetentionDays ('Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday')[] = [
-  'Sunday'
-]
 param timeZone string
 
 param protectedStorageAccountId string
 param protectedAzureFileShares string[]
 
 @description('The schedule policy used for the custom Virtual Machine backup policy.')
-param schedulePolicy object = {
-  schedulePolicyType: 'SimpleSchedulePolicyV2'
-  scheduleRunFrequency: 'Hourly'
-  hourlySchedule: {
-    interval: 4
-    scheduleWindowStartTime: backupTime
-    scheduleWindowDuration: 4
-  }
-  dailySchedule: null
-  weeklySchedule: null
-}
+param vmSchedulePolicy schedulePolicyTypes.iaasSchedulePolicyType
 
 @description('The schedule policy used for the custom Azure File Shares backup policy.')
-param fileShareSchedulePolicy object = {
-  schedulePolicyType: 'SimpleSchedulePolicy'
-  scheduleRunFrequency: 'Daily'
-  scheduleRunDays: null
-  scheduleRunTimes: [
-    backupTime
-  ]
-}
+param fileShareSchedulePolicy schedulePolicyTypes.fileShareSchedulePolicyType
 
 @description('The retention policy used for all custom backup policies.')
-param retentionPolicy object = {
-  retentionPolicyType: 'LongTermRetentionPolicy'
-
-  dailySchedule: {
-    retentionTimes: [backupTime]
-    retentionDuration: {
-      count: dailyRetentionDurationCount
-      durationType: 'Days'
-    }
-  }
-
-  weeklySchedule: {
-    daysOfTheWeek: weeklyRetentionDays
-    retentionTimes: [backupTime]
-    retentionDuration: {
-      count: weeklyRetentionDurationCount
-      durationType: 'Weeks'
-    }
-  }
-
-  monthlySchedule: {
-    retentionScheduleFormatType: 'Daily'
-    retentionScheduleDaily: {
-      daysOfTheMonth: [
-        {
-          date: 1
-          isLast: false
-        }
-      ]
-    }
-    retentionTimes: [backupTime]
-    retentionDuration: {
-      count: monthlyRetentionDurationCount
-      durationType: 'Months'
-    }
-    retentionScheduleWeekly: null
-  }
-
-  yearlySchedule: null
-}
+param retentionPolicy object
 
 var vaultName = replace(namingStructure, '{rtype}', 'rsv')
+
+import * as schedulePolicyTypes from '../types/backupSchedulePolicyTypes.bicep'
 
 resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
   name: keyVaultResourceGroupName
@@ -216,7 +155,7 @@ var backupPolicyCommonProperties = {
 }
 
 var backupPolicyIaasVmProperties = {
-  schedulePolicy: schedulePolicy
+  schedulePolicy: vmSchedulePolicy
   backupManagementType: 'AzureIaasVM'
   instantRpRetentionRangeInDays: 2
   policyType: 'V2'
