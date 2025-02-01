@@ -74,6 +74,8 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
     // Required for ADF access to file shares (no support for managed identity yet)
     allowSharedKeyAccess: allowSharedKeyAccess
 
+    defaultToOAuthAuthentication: true
+
     networkAcls: {
       // TODO: Add resource access rules for export approval Logic App
       resourceAccessRules: []
