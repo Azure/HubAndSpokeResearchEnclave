@@ -22,17 +22,17 @@ param protectedStorageAccountId string
 param protectedAzureFileShares string[]
 
 @description('The schedule policy used for the custom Virtual Machine backup policy.')
-param vmSchedulePolicy schedulePolicyTypes.iaasSchedulePolicyType
+param vmSchedulePolicy backupPolicyTypes.iaasSchedulePolicyType
 
 @description('The schedule policy used for the custom Azure File Shares backup policy.')
-param fileShareSchedulePolicy schedulePolicyTypes.fileShareSchedulePolicyType
+param fileShareSchedulePolicy backupPolicyTypes.fileShareSchedulePolicyType
 
 @description('The retention policy used for all custom backup policies.')
-param retentionPolicy object
+param retentionPolicy backupPolicyTypes.retentionPolicyType
 
 var vaultName = replace(namingStructure, '{rtype}', 'rsv')
 
-import * as schedulePolicyTypes from '../types/backupSchedulePolicyTypes.bicep'
+import * as backupPolicyTypes from '../types/backupPolicyTypes.bicep'
 
 resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
   name: keyVaultResourceGroupName
