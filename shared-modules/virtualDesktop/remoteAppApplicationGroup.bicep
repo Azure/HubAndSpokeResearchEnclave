@@ -30,7 +30,7 @@ type application = {
  * RESOURCES
  */
 
-resource applicationGroup 'Microsoft.DesktopVirtualization/applicationGroups@2023-09-05' = {
+resource vdag 'Microsoft.DesktopVirtualization/applicationGroups@2023-09-05' = {
   name: name
   location: location
   properties: {
@@ -44,7 +44,7 @@ resource applicationGroup 'Microsoft.DesktopVirtualization/applicationGroups@202
 resource remoteApplications 'Microsoft.DesktopVirtualization/applicationGroups/applications@2023-09-05' = [
   for app in applications: {
     name: app.name
-    parent: applicationGroup
+    parent: vdag
     properties: {
       commandLineSetting: contains(app, 'commandLineSetting') && !empty(app.commandLineSetting)
         ? app.commandLineSetting
@@ -66,13 +66,13 @@ resource remoteApplications 'Microsoft.DesktopVirtualization/applicationGroups/a
 // Assign the specified role to the specified principal
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =
   if (!empty(principalId) && !empty(roleDefinitionId)) {
-    name: guid(applicationGroup.id, principalId, roleDefinitionId)
-    scope: applicationGroup
+    name: guid(vdag.id, principalId, roleDefinitionId)
+    scope: vdag
     properties: {
       roleDefinitionId: roleDefinitionId
       principalId: principalId
     }
   }
 
-output id string = applicationGroup.id
-output name string = applicationGroup.name
+output id string = vdag.id
+output name string = vdag.name
