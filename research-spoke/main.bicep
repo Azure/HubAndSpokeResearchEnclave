@@ -137,7 +137,7 @@ param publicStorageAccountAllowedIPs array = []
 param complianceTarget string = 'NIST80053R5'
 
 @description('The backup schedule policy for virtual machines. Defaults to every four hours starting at midnight each day. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).')
-param vmSchedulePolicy schedulePolicyTypes.iaasSchedulePolicyType = {
+param vmSchedulePolicy backupPolicyTypes.iaasSchedulePolicyType = {
   schedulePolicyType: 'SimpleSchedulePolicyV2'
   scheduleRunFrequency: 'Hourly'
   hourlySchedule: {
@@ -150,7 +150,7 @@ param vmSchedulePolicy schedulePolicyTypes.iaasSchedulePolicyType = {
 }
 
 @description('The backup schedule policy for Azure File Shares. Defaults to daily at the retention time. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).')
-param fileShareSchedulePolicy schedulePolicyTypes.fileShareSchedulePolicyType = {
+param fileShareSchedulePolicy backupPolicyTypes.fileShareSchedulePolicyType = {
   schedulePolicyType: 'SimpleSchedulePolicy'
   scheduleRunFrequency: 'Daily'
   scheduleRunDays: null
@@ -158,7 +158,7 @@ param fileShareSchedulePolicy schedulePolicyTypes.fileShareSchedulePolicyType = 
 }
 
 @description('The retention policy for all backup policies. Defaults to 8 days of daily backups, 6 weeks of weekly backups, and 13 months of monthly backups.')
-param backupRetentionPolicy object = {
+param backupRetentionPolicy backupPolicyTypes.retentionPolicyType = {
   retentionPolicyType: 'LongTermRetentionPolicy'
 
   dailySchedule: {
@@ -170,7 +170,7 @@ param backupRetentionPolicy object = {
   }
 
   weeklySchedule: {
-    daysOfTheWeek: 'Sunday'
+    daysOfTheWeek: ['Sunday']
     retentionTimes: [retentionBackupTime]
     retentionDuration: {
       count: 6
@@ -223,7 +223,7 @@ param debugPrincipalId string = az.deployer().objectId
 
 //----------------------------- START TYPES --------------------------------
 
-import * as schedulePolicyTypes from '../shared-modules/types/backupSchedulePolicyTypes.bicep'
+import * as backupPolicyTypes from '../shared-modules/types/backupPolicyTypes.bicep'
 import { roleAssignmentType } from '../shared-modules/types/roleAssignment.bicep'
 
 //----------------------------- END TYPES ----------------------------------
