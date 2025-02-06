@@ -25,6 +25,84 @@ type fileShareSchedulePolicyType = {
   scheduleRunTimes: string[]?
 }
 
+@export()
+type retentionPolicyType = {
+  retentionPolicyType: 'LongTermRetentionPolicy'
+
+  dailySchedule: {
+    retentionTimes: string[]
+    retentionDuration: {
+      count: int
+      durationType: 'Days'
+    }
+  }
+
+  weeklySchedule: {
+    daysOfTheWeek: ('Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday')[]
+    retentionTimes: string[]
+    retentionDuration: {
+      count: int
+      durationType: 'Weeks'
+    }
+  }?
+
+  monthlySchedule: {
+    retentionScheduleFormatType: 'Daily' | 'Weekly'
+    retentionScheduleDaily: {
+      daysOfTheMonth: [
+        {
+          date: int
+          isLast: bool
+        }
+      ]
+    }?
+    retentionScheduleWeekly: {
+      daysOfTheWeek: ('Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday')[]
+      weeksOfTheMonth: ('First')[]
+    }?
+
+    retentionTimes: string[]
+    retentionDuration: {
+      count: int
+      durationType: 'Months'
+    }
+  }?
+
+  yearlySchedule: {
+    retentionDuration: {
+      count: int
+      durationType: 'Years'
+    }
+    retentionTimes: string[]
+    retentionScheduleFormatType: 'Weekly'
+    monthsOfYear: (
+      | 'January'
+      | 'February'
+      | 'March'
+      | 'April'
+      | 'May'
+      | 'June'
+      | 'July'
+      | 'August'
+      | 'September'
+      | 'October'
+      | 'November'
+      | 'December')[]
+    retentionScheduleWeekly: {
+      daysOfTheWeek: ('Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday')[]
+      weeksOfTheMonth: ('First')[]
+    }?
+    retentionScheduleDaily: {
+      daysOfTheMonth: [
+        {
+          date: int
+          isLast: bool
+        }
+      ]
+    }?
+  }?
+}
+
 type hourlySchedule = {
   interval: int
   scheduleWindowDuration: int
