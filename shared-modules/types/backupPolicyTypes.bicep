@@ -38,7 +38,7 @@ type retentionPolicyType = {
   }
 
   weeklySchedule: {
-    daysOfTheWeek: ('Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday')[]
+    daysOfTheWeek: scheduleRunDays
     retentionTimes: string[]
     retentionDuration: {
       count: int
@@ -57,7 +57,7 @@ type retentionPolicyType = {
       ]
     }?
     retentionScheduleWeekly: {
-      daysOfTheWeek: ('Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday')[]
+      daysOfTheWeek: scheduleRunDays
       weeksOfTheMonth: ('First')[]
     }?
 
@@ -89,7 +89,7 @@ type retentionPolicyType = {
       | 'November'
       | 'December')[]
     retentionScheduleWeekly: {
-      daysOfTheWeek: ('Sunday' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday')[]
+      daysOfTheWeek: scheduleRunDays
       weeksOfTheMonth: ('First')[]
     }?
     retentionScheduleDaily: {
