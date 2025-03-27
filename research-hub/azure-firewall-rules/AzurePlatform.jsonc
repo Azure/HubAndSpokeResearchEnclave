@@ -106,7 +106,29 @@
           "targetFqdns": [
             "*.monitor.core.windows.net",
             "portal.loganalytics.io",
-            "api.loganalytics.io",
+            "api.loganalytics.io"
+          ],
+          "targetUrls": [],
+          "terminateTLS": false,
+          "destinationAddresses": [],
+          "sourceIpGroups": ["{{ipAddressPool}}"]
+        },
+        {
+          "ruleType": "ApplicationRule",
+          "name": "Azure Monitor Agent",
+          "protocols": [
+            {
+              "protocolType": "Http",
+              "port": 80
+            },
+            {
+              "protocolType": "Https",
+              "port": 443
+            }
+          ],
+          "fqdnTags": [],
+          "webCategories": [],
+          "targetFqdns": [
             "global.handler.control.monitor.azure.com",
             "{{vmRegionName}}.handler.control.monitor.azure.com",
             "{{logAnalyticsWorkspaceId}}.ods.opinsights.azure.com"
@@ -133,10 +155,6 @@
           "sourceIpGroups": ["{{ipAddressPool}}"],
           "destinationIpGroups": [],
           "destinationAddresses": ["40.83.235.53", "20.118.99.224"],
-          // "destinationFqdns": [
-          //   "azkms.core.windows.net",
-          //   "kms.core.windows.net"
-          // ],
           "destinationPorts": ["1688"]
         }
       ]
@@ -265,9 +283,28 @@
           ],
           "fqdnTags": [],
           "webCategories": [],
+          "targetFqdns": ["api.loganalytics.us", "portal.loganalytics.us"],
+          "targetUrls": [],
+          "terminateTLS": false,
+          "destinationAddresses": [],
+          "sourceIpGroups": ["{{ipAddressPool}}"]
+        },
+        {
+          "ruleType": "ApplicationRule",
+          "name": "Azure Monitor Agent",
+          "protocols": [
+            {
+              "protocolType": "Http",
+              "port": 80
+            },
+            {
+              "protocolType": "Https",
+              "port": 443
+            }
+          ],
+          "fqdnTags": [],
+          "webCategories": [],
           "targetFqdns": [
-            "api.loganalytics.us",
-            "portal.loganalytics.us",
             "global.handler.control.monitor.azure.us",
             "{{vmRegionName}}.handler.control.monitor.azure.us",
             "{{logAnalyticsWorkspaceId}}.ods.opinsights.azure.us"
@@ -293,10 +330,6 @@
           "ipProtocols": ["TCP"],
           "sourceIpGroups": ["{{ipAddressPool}}"],
           "destinationIpGroups": [],
-          // "destinationFqdns": [
-          //   "azkms.core.usgovcloudapi.net",
-          //   "kms.core.usgovcloudapi.net"
-          // ],
           "destinationAddresses": ["52.126.105.2"],
           "destinationPorts": ["1688"]
         }
