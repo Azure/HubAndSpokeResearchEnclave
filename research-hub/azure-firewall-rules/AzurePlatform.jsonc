@@ -106,7 +106,10 @@
           "targetFqdns": [
             "*.monitor.core.windows.net",
             "portal.loganalytics.io",
-            "api.loganalytics.io"
+            "api.loganalytics.io",
+            "global.handler.control.monitor.azure.com",
+            "{{vmRegionName}}.handler.control.monitor.azure.com",
+            "{{logAnalyticsWorkspaceId}}.ods.opinsights.azure.com"
           ],
           "targetUrls": [],
           "terminateTLS": false,
@@ -262,7 +265,13 @@
           ],
           "fqdnTags": [],
           "webCategories": [],
-          "targetFqdns": ["api.loganalytics.us", "portal.loganalytics.us"],
+          "targetFqdns": [
+            "api.loganalytics.us",
+            "portal.loganalytics.us",
+            "global.handler.control.monitor.azure.us",
+            "{{vmRegionName}}.handler.control.monitor.azure.us",
+            "{{logAnalyticsWorkspaceId}}.ods.opinsights.azure.us"
+          ],
           "targetUrls": [],
           "terminateTLS": false,
           "destinationAddresses": [],
