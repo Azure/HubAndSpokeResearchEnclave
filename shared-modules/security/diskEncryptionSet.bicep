@@ -12,7 +12,7 @@ param uamiId string = ''
 var isAzureUSGov = az.environment().name == 'AzureUSGovernment'
 var useSystemAssignedManagedIdentityOnly = isAzureUSGov
 
-resource diskEncryptionSet 'Microsoft.Compute/diskEncryptionSets@2023-04-02' = {
+resource diskEncryptionSet 'Microsoft.Compute/diskEncryptionSets@2024-03-02' = {
   name: name
   location: location
   identity: {

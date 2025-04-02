@@ -52,7 +52,7 @@ param shortcutTargetPath string = ''
 import { activeDirectoryDomainInfo } from '../../../shared-modules/types/activeDirectoryDomainInfo.bicep'
 import { imageReferenceType } from '../../../shared-modules/types/imageReferenceType.bicep'
 
-var deploymentNameStructure = 'researchvm-{rtype}-${deploymentTime}'
+var deploymentNameStructure = 'researchVm-{rtype}-${deploymentTime}'
 
 // Create a new availability set for the session hosts
 resource availabilitySet 'Microsoft.Compute/availabilitySets@2023-03-01' = if (vmCount > 1) {
