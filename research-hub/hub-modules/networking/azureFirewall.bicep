@@ -23,6 +23,7 @@ param dnsServerIPAddresses array = []
 param domainControllerIPAddresses array = []
 param managementSubnetIPGroupId string = ''
 param ipAddressPoolIPGroupId string
+param logIngestFqdnPrefix string
 
 var createManagementIPConfiguration = (firewallTier == 'Basic' || forcedTunneling)
 // Basic Firewall AND not forced tunneling requires two public IP addresses
@@ -130,9 +131,17 @@ var defaultRuleCollectionGroups = {
   }
   AzurePlatform: {
     rules: json(replace(
-      loadTextContent('../../azure-firewall-rules/AzurePlatform.jsonc'),
-      '{{ipAddressPool}}',
-      ipAddressPoolIPGroupId
+      replace(
+        replace(
+          loadTextContent('../../azure-firewall-rules/AzurePlatform.jsonc'),
+          '{{ipAddressPool}}',
+          ipAddressPoolIPGroupId
+        ),
+        '{{logAnalyticsWorkspaceId}}',
+        logIngestFqdnPrefix
+      ),
+      '{{vmRegionName}}',
+      location
     ))[az.environment().name]
     priority: 1000
   }

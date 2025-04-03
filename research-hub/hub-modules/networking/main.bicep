@@ -38,6 +38,7 @@ param includeDnsFirewallRules bool = false
 @description('The entire IP address pool for this research environment, including all (future) spokes. This is usually a supernet/summarized CIDR.')
 param ipAddressPool array = []
 param domainControllerIPAddresses array = []
+param logAnalyticsWorkspaceId string = ''
 
 param location string
 param tags object
@@ -275,6 +276,8 @@ module azureFirewallModule './azureFirewall.bicep' = {
     managementSubnetIPGroupId: deployManagementSubnet ? managementSubnetIPGroupModule.outputs.id : ''
     // TODO: AVD session host support in hub
     //includeAvdSubnetRules: deployAvdSubnet
+
+    logIngestFqdnPrefix: empty(logAnalyticsWorkspaceId) ? '*' : logAnalyticsWorkspaceId
   }
 }
 
