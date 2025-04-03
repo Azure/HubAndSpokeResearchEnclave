@@ -77,6 +77,9 @@ param sessionHostLocalAdminUsername string = ''
 @secure()
 param sessionHostLocalAdminPassword string = ''
 
+@description('The prefix to use for creating AVD session host VM names. If not specified, the default prefix will be used.')
+param customSessionHostNamePrefix string = ''
+
 // Required if logonType == ad and !researchVmsAreSessionHosts
 @description('The username of a domain user or service account to use to join the Active Directory domain. Required if using AD join.')
 @secure()
@@ -426,7 +429,9 @@ module avdJumpBoxModule '../shared-modules/virtualDesktop/avd.bicep' = if (!rese
 // taking into account that the max length of the vmNamePrefix is 11 characters
 var vmNamePrefixLead = 'sh-'
 var vmNamePrefixWorkloadName = take(workloadName, 11 - length(string(sequence)) - length('sh-'))
-var vmNamePrefix = '${vmNamePrefixLead}${vmNamePrefixWorkloadName}${sequence}'
+var vmNamePrefix = empty(customSessionHostNamePrefix)
+  ? '${vmNamePrefixLead}${vmNamePrefixWorkloadName}${sequence}'
+  : customSessionHostNamePrefix
 
 module avdJumpBoxSessionHostModule '../shared-modules/virtualDesktop/sessionHosts.bicep' = if (!researchVmsAreSessionHosts && jumpBoxSessionHostCount > 0) {
   scope: avdRg

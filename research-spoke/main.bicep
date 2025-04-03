@@ -1,5 +1,8 @@
 targetScope = 'subscription'
 
+metadata description = 'Deploys a research spoke associated with a previously deployed research hub.'
+metadata name = 'Research Spoke'
+
 //------------------------------ START PARAMETERS ------------------------------
 
 @description('The Azure region where the spoke will be deployed.')
@@ -25,13 +28,14 @@ param sequence int = 1
 @description('The naming convention to use for Azure resource names. Can contain placeholders for {rtype}, {workloadName}, {location}, {env}, and {seq}. The only supported segment separator is \'-\'.')
 param namingConvention string = '{workloadName}-{subWorkloadName}-{env}-{rtype}-{loc}-{seq}'
 
+@description('Do not specify. Date and time will be used to create unique deployment names.')
 param deploymentTime string = utcNow()
 
 @description('The date and time seed for the expiration of the encryption keys.')
 param encryptionKeyExpirySeed string = utcNow()
 
 // Network parameters
-@description('Format: [ "192.168.0.0/24", "192.168.10.0/24" ]')
+@description('Format: `[ "192.168.0.0/24", "192.168.10.0/24" ]`')
 @minLength(1)
 param networkAddressSpaces array
 @description('The private IP address of the hub firewall.')
@@ -58,15 +62,17 @@ param workspaceFriendlyName string = 'N/A'
 // @description('The Azure resource ID of the standalone image to use for new session hosts. If blank, will use the Windows 11 23H2 O365 Gen 2 Marketplace image.')
 // param sessionHostVmImageResourceId string = ''
 
-@description('If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.')
+@description('Experimental. If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.')
 param createPolicyExemptions bool = false
 @description('Required if policy exemptions must be created.')
 param policyAssignmentId string = ''
 
+@description('The username for the local user account on the session hosts. Required if when deploying AVD session hosts in the hub (`useSessionHostAsResearchVm = false`).')
 @secure()
-param sessionHostLocalAdminUsername string
+param sessionHostLocalAdminUsername string = ''
+@description('The password for the local user account on the session hosts. Required if when deploying AVD session hosts in the hub (`useSessionHostAsResearchVm = false`).')
 @secure()
-param sessionHostLocalAdminPassword string
+param sessionHostLocalAdminPassword string = ''
 @description('Specifies if logons to virtual machines should use AD or Entra ID.')
 @allowed(['ad', 'entraID'])
 param logonType string
@@ -77,6 +83,7 @@ param domainJoinUsername string = ''
 @secure()
 param domainJoinPassword string = ''
 
+@description('The identity type to use for Azure Files. Use `AADKERB` for Entra ID Kerberos, `AADDS` for Entra Domain Services, or `None` for ADDS.')
 @allowed(['AADKERB', 'AADDS', 'None'])
 param filesIdentityType string
 
@@ -88,9 +95,9 @@ param adOuPath string = ''
 param storageAccountOuPath string = adOuPath
 @description('Optional. The number of Azure Virtual Desktop session hosts to create in the pool. Defaults to 1.')
 param sessionHostCount int = 1
-@description('The prefix used for the computer names of the session host(s). Maximum 11 characters.')
+@description('The prefix used for the computer names of the session host(s). Maximum 11 characters. If not specified, the default session host names will be used.')
 @maxLength(11)
-param sessionHostNamePrefix string = 'N/A'
+param customSessionHostNamePrefix string = ''
 @description('A valid Azure Virtual Machine size. Use `az vm list-sizes --location "<region>"` to retrieve a list for the selected location')
 param sessionHostSize string = 'N/A'
 @description('If true, will configure the deployment of AVD to make the AVD session hosts usable as research VMs. This will give full desktop access, flow the AVD traffic through the firewall, etc.')
@@ -105,6 +112,8 @@ param adminEntraIdObjectId string
 param isAirlockReviewCentralized bool = false
 @description('The email address of the reviewer for this project.')
 param airlockApproverEmail string
+@description('The allowed file extensions for ingest.')
+param allowedIngestFileExtensions array = []
 
 // HUB AIRLOCK NAMES
 @description('The full Azure resource ID of the hub\'s airlock review storage account.')
@@ -117,7 +126,7 @@ param centralAirlockKeyVaultId string
 @description('The list of allowed IP addresses or ranges for ingest and approved export pickup purposes.')
 param publicStorageAccountAllowedIPs array = []
 
-@description('The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy a policy assignment.')
+@description('The Azure built-in regulatory compliance framework to target. This will affect whether or not customer-managed keys, private endpoints, etc. are used. This will *not* deploy any policy assignments.')
 @allowed([
   'NIST80053R5'
   'HIPAAHITRUST'
@@ -127,15 +136,97 @@ param publicStorageAccountAllowedIPs array = []
 // Default to the strictest supported compliance framework
 param complianceTarget string = 'NIST80053R5'
 
+@description('The backup schedule policy for virtual machines. Defaults to every four hours starting at midnight each day. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).')
+param vmSchedulePolicy backupPolicyTypes.iaasSchedulePolicyType = {
+  schedulePolicyType: 'SimpleSchedulePolicyV2'
+  scheduleRunFrequency: 'Hourly'
+  hourlySchedule: {
+    interval: 4
+    scheduleWindowStartTime: '00:00'
+    scheduleWindowDuration: 23
+  }
+  dailySchedule: null
+  weeklySchedule: null
+}
+
+@description('The backup schedule policy for Azure File Shares. Defaults to daily at the retention time. Refer to the type definitions at [https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects](https://learn.microsoft.com/azure/templates/microsoft.recoveryservices/vaults/backuppolicies?pivots=deployment-language-bicep#schedulepolicy-objects).')
+param fileShareSchedulePolicy backupPolicyTypes.fileShareSchedulePolicyType = {
+  schedulePolicyType: 'SimpleSchedulePolicy'
+  scheduleRunFrequency: 'Daily'
+  scheduleRunDays: null
+  scheduleRunTimes: [retentionBackupTime]
+}
+
+@description('The retention policy for all backup policies. Defaults to 8 days of daily backups, 6 weeks of weekly backups, and 13 months of monthly backups.')
+param backupRetentionPolicy backupPolicyTypes.retentionPolicyType = {
+  retentionPolicyType: 'LongTermRetentionPolicy'
+
+  dailySchedule: {
+    retentionTimes: [retentionBackupTime]
+    retentionDuration: {
+      count: 8
+      durationType: 'Days'
+    }
+  }
+
+  weeklySchedule: {
+    daysOfTheWeek: ['Sunday']
+    retentionTimes: [retentionBackupTime]
+    retentionDuration: {
+      count: 6
+      durationType: 'Weeks'
+    }
+  }
+
+  monthlySchedule: {
+    retentionScheduleFormatType: 'Daily'
+    retentionScheduleDaily: {
+      daysOfTheMonth: [
+        {
+          date: 1
+          isLast: false
+        }
+      ]
+    }
+    retentionTimes: [retentionBackupTime]
+    retentionDuration: {
+      count: 13
+      durationType: 'Months'
+    }
+    retentionScheduleWeekly: null
+  }
+
+  yearlySchedule: null
+}
+
+@description('The time zone to use for the backup schedule policy.')
+param backupSchedulePolicyTimeZone string = 'UTC'
+
+@description('In case of Hourly backup schedules, this retention time must be set to the time of one of the hourly backups.')
+param retentionBackupTime string = '2023-12-31T08:00:00.000Z'
+
+@description('The Azure resource ID of the management VM in the hub. Required if using AD join for Azure Files (`filesIdentityType = \'None\'`). This value is output by the hub deployment.')
 param hubManagementVmId string = ''
+@description('The Entra ID object ID of the user-assigned managed identity of the management VM. This will be given the necessary role assignment to perform a domain join on the storage account(s). Required if using AD join for Azure Files (`filesIdentityType = \'None\'`). This value is output by the hub deployment.')
 param hubManagementVmUamiPrincipalId string = ''
+@description('The client ID of the user-assigned managed identity of the management VM. Required if using AD join for Azure Files (`filesIdentityType = \'None\'`). This value is output by the hub deployment.')
 param hubManagementVmUamiClientId string = ''
 
+@description('Set to `true` to enable debug mode of the spoke. Debug mode will allow remote access to storage, etc. Should be not be used for production deployments.')
 param debugMode bool = false
+@description('Used when `debugMode = true`. The IP address to allow access to storage, Key Vault, etc.')
 param debugRemoteIp string = ''
-param debugPrincipalId string = ''
+@description('The object ID of the user or group to assign permissions. Only used when `debugMode = true`.')
+param debugPrincipalId string = az.deployer().objectId
 
 //----------------------------- END PARAMETERS -----------------------------
+
+//----------------------------- START TYPES --------------------------------
+
+import * as backupPolicyTypes from '../shared-modules/types/backupPolicyTypes.bicep'
+import { roleAssignmentType } from '../shared-modules/types/roleAssignment.bicep'
+
+//----------------------------- END TYPES ----------------------------------
 
 //----------------------------- START VARIABLES ----------------------------
 
@@ -381,12 +472,9 @@ module diskEncryptionSetModule '../shared-modules/security/diskEncryptionSet.bic
   dependsOn: [uamiKvRbacModule]
 }
 
-// TODO: Split once into var and re-use var
-var hubManagementVmSubscriptionId = split(hubManagementVmId, '/')[2]
-var hubManagementVmResourceGroupName = split(hubManagementVmId, '/')[4]
-var hubManagementVmName = split(hubManagementVmId, '/')[8]
-
-import { roleAssignmentType } from '../shared-modules/types/roleAssignment.bicep'
+var hubManagementVmSubscriptionId = !empty(hubManagementVmId) ? split(hubManagementVmId, '/')[2] : ''
+var hubManagementVmResourceGroupName = !empty(hubManagementVmId) ? split(hubManagementVmId, '/')[4] : ''
+var hubManagementVmName = !empty(hubManagementVmId) ? split(hubManagementVmId, '/')[8] : ''
 
 // Create a role assignment representation for researchers to see the storage accounts
 var storageAccountReaderRoleAssignmentForResearcherGroup = {
@@ -478,6 +566,7 @@ module privateStContainerRbacModule '../module-library/roleAssignments/roleAssig
 
 module privateStFileShareRbacModule '../module-library/roleAssignments/roleAssignment-st-fileShare.bicep' = [
   for shareName in items(fileShareNames): {
+    #disable-next-line BCP334
     name: take(replace(deploymentNameStructure, '{rtype}', 'st-priv-fs-${shareName.key}-rbac'), 64)
     scope: storageRg
     params: {
@@ -490,7 +579,17 @@ module privateStFileShareRbacModule '../module-library/roleAssignments/roleAssig
   }
 ]
 
+// Construct the session hosts' VM name prefix using the pattern "SH-{workloadName}-{sequence}",
+// taking into account that the max length of the vmNamePrefix is 11 characters
+var vmNamePrefixLead = 'sh-'
+var vmNamePrefixWorkloadName = take(workloadName, 11 - length(string(sequence)) - length('sh-'))
+var vmNamePrefix = empty(customSessionHostNamePrefix)
+  ? '${vmNamePrefixLead}${vmNamePrefixWorkloadName}${sequence}'
+  : customSessionHostNamePrefix
+
 module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionHostAsResearchVm) {
+  // This warning is incorrect
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'vdi'), 64)
   params: {
     resourceGroupName: replace(rgNamingStructure, '{rgname}', 'avd')
@@ -518,13 +617,13 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     diskEncryptionSetId: diskEncryptionSetModule.outputs.id
     sessionHostCount: sessionHostCount
 
-    backupPolicyName: recoveryServicesVaultModule.outputs.backupPolicyName
+    backupPolicyName: recoveryServicesVaultModule.outputs.vmBackupPolicyName
     recoveryServicesVaultId: recoveryServicesVaultModule.outputs.id
 
     // TODO: Use activeDirectoryDomainInfo type
     domainJoinPassword: domainJoinPassword
     domainJoinUsername: domainJoinUsername
-    sessionHostNamePrefix: sessionHostNamePrefix
+    sessionHostNamePrefix: vmNamePrefix
     sessionHostSize: sessionHostSize
 
     adDomainFqdn: adDomainFqdn
@@ -584,6 +683,7 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
 
     namingStructure: namingStructure
     spokePrivateStorageAccountName: storageModule.outputs.storageAccountName
+    spokePrivateFileShareName: fileShareNames.shared
     publicStorageAccountAllowedIPs: publicStorageAccountAllowedIPs
 
     roles: rolesModule.outputs.roles
@@ -619,6 +719,8 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
     ]
 
     usePrivateEndpoints: usePrivateEndpoints
+
+    allowedIngestFileExtensions: allowedIngestFileExtensions
   }
 }
 
@@ -644,6 +746,18 @@ module recoveryServicesVaultModule '../shared-modules/recovery/recoveryServicesV
     roles: rolesModule.outputs.roles
     keyVaultResourceGroupName: keyVaultModule.outputs.resourceGroupName
     keyVaultName: keyVaultModule.outputs.keyVaultName
+
+    timeZone: backupSchedulePolicyTimeZone
+
+    protectedStorageAccountId: storageModule.outputs.storageAccountId
+    protectedAzureFileShares: [
+      fileShareNames.shared
+    ]
+
+    fileShareSchedulePolicy: fileShareSchedulePolicy
+    vmSchedulePolicy: vmSchedulePolicy
+
+    retentionPolicy: backupRetentionPolicy
   }
 }
 
@@ -661,12 +775,19 @@ resource avdConnectionPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-
   scope: hubDnsZoneResourceGroup
 }
 
+@description('The Azure resource ID of the spoke\'s Recovery Services Vault. Used in service module templates to add additional resources to the vault.')
 output recoveryServicesVaultId string = recoveryServicesVaultModule.outputs.id
-output backupPolicyName string = recoveryServicesVaultModule.outputs.backupPolicyName
+@description('The name of the backup policy used for Azure VM backups in the spoke.')
+output vmBackupPolicyName string = recoveryServicesVaultModule.outputs.vmBackupPolicyName
+@description('The Azure resource ID of the disk encryption set used for customer-managed key encryption of managed disks in the spoke.')
 output diskEncryptionSetId string = diskEncryptionSetModule.outputs.id
+@description('The Azure resource ID of the ComputeSubnet.')
 output computeSubnetId string = networkModule.outputs.createdSubnets.computeSubnet.id
+@description('The resource group name of the compute resource group.')
 output computeResourceGroupName string = computeRg.name
+
 // Double up the \ in the output so it can be pasted easily into a bicepparam file
+@description('The UNC path to the \'shared\' file share in the spoke\'s private storage account.')
 output shortcutTargetPath string = replace(
   '${storageModule.outputs.storageAccountFileShareBaseUncPath}${fileShareNames.shared}',
   '\\',

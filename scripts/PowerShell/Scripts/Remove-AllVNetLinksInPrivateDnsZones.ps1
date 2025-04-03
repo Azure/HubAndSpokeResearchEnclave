@@ -1,10 +1,10 @@
 [CmdletBinding()]
 param (
-    [Parameter(Position = 1)]
+    [Parameter(Position = 0)]
     [string]    $SubscriptionId,
-    [Parameter(Position = 2)]
+    [Parameter(Position = 1)]
     [string]    $ResourceGroupName,
-    [Parameter(Position = 3)]
+    [Parameter(Position = 2)]
     [string]$Environment = 'AzureCloud'
 )
 

@@ -16,7 +16,23 @@ param location string = resourceGroup().location
 param tags object
 param storageType string = 'GeoRedundant'
 
+param timeZone string
+
+param protectedStorageAccountId string
+param protectedAzureFileShares string[]
+
+@description('The schedule policy used for the custom Virtual Machine backup policy.')
+param vmSchedulePolicy backupPolicyTypes.iaasSchedulePolicyType
+
+@description('The schedule policy used for the custom Azure File Shares backup policy.')
+param fileShareSchedulePolicy backupPolicyTypes.fileShareSchedulePolicyType
+
+@description('The retention policy used for all custom backup policies.')
+param retentionPolicy backupPolicyTypes.retentionPolicyType
+
 var vaultName = replace(namingStructure, '{rtype}', 'rsv')
+
+import * as backupPolicyTypes from '../types/backupPolicyTypes.bicep'
 
 resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
   name: keyVaultResourceGroupName
@@ -68,7 +84,7 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' = 
 
     publicNetworkAccess: 'Enabled'
 
-    // Use a customer-managed key when not debugging and when specified
+    // Use a customer-managed key when not debugging and when required
     encryption: !debugMode && useCMK
       ? {
           keyVaultProperties: {
@@ -112,10 +128,10 @@ resource backupConfig 'Microsoft.RecoveryServices/vaults/backupconfig@2024-04-01
   }
 }
 
-// Create a new enhanced policy to use custom schedule
-var backupTime = '2023-12-31T08:00:00.000Z'
-
 // Break up the naming convention on the sequence placeholder to use for the backup RG name
+// The "n" in the backup resource group is another sequence number determined by Azure Backup
+// The end result is that the backup resource group name will be contain "{seq}-n" where
+// other resource group names will have "{seq}
 var processNamingConventionPlaceholders = replace(
   replace(
     replace(
@@ -133,77 +149,54 @@ var splitNamingConvention = split(processNamingConventionPlaceholders, '{seq}')
 var azureBackupRGNamePrefix = '${splitNamingConvention[0]}${sequenceFormatted}-'
 var azureBackupRGNameSuffix = length(splitNamingConvention) > 1 ? splitNamingConvention[1] : ''
 
-// LATER: Parameterize backup policy values
-resource enhancedBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2024-04-01' = {
-  name: 'EnhancedPolicy-${workloadName}-${sequenceFormatted}'
-  parent: recoveryServicesVault
-  properties: {
-    backupManagementType: 'AzureIaasVM'
+var backupPolicyCommonProperties = {
+  retentionPolicy: retentionPolicy
+  timeZone: timeZone
+}
 
-    instantRPDetails: {
-      // Following the naming convention of the other resource groups
-      azureBackupRGNamePrefix: azureBackupRGNamePrefix
-      azureBackupRGNameSuffix: azureBackupRGNameSuffix
-    }
-
-    instantRpRetentionRangeInDays: 2
-    timeZone: 'Central Standard Time'
-    policyType: 'V2'
-
-    schedulePolicy: {
-      schedulePolicyType: 'SimpleSchedulePolicyV2'
-      scheduleRunFrequency: 'Hourly'
-      hourlySchedule: {
-        interval: 4
-        scheduleWindowStartTime: backupTime
-        scheduleWindowDuration: 4
-      }
-      dailySchedule: null
-      weeklySchedule: null
-    }
-
-    retentionPolicy: {
-      retentionPolicyType: 'LongTermRetentionPolicy'
-
-      dailySchedule: {
-        retentionTimes: [backupTime]
-        retentionDuration: {
-          count: 8
-          durationType: 'Days'
-        }
-      }
-
-      weeklySchedule: {
-        retentionTimes: [backupTime]
-        retentionDuration: {
-          count: 6
-          durationType: 'Weeks'
-        }
-        daysOfTheWeek: ['Sunday']
-      }
-
-      monthlySchedule: {
-        retentionTimes: [backupTime]
-        retentionDuration: {
-          count: 13
-          durationType: 'Months'
-        }
-        retentionScheduleFormatType: 'Daily'
-        retentionScheduleDaily: {
-          daysOfTheMonth: [
-            {
-              date: 1
-              isLast: false
-            }
-          ]
-        }
-        retentionScheduleWeekly: null
-      }
-
-      yearlySchedule: null
-    }
+var backupPolicyIaasVmProperties = {
+  schedulePolicy: vmSchedulePolicy
+  backupManagementType: 'AzureIaasVM'
+  instantRpRetentionRangeInDays: 2
+  policyType: 'V2'
+  instantRPDetails: {
+    azureBackupRGNamePrefix: azureBackupRGNamePrefix
+    azureBackupRGNameSuffix: azureBackupRGNameSuffix
   }
 }
+
+var backupPolicyAzureStorageProperties = {
+  backupManagementType: 'AzureStorage'
+  workloadType: 'AzureFileShare'
+  schedulePolicy: fileShareSchedulePolicy
+}
+
+// Create an enhanced VM backup policy to backup multiple times per day
+resource iaasVmBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2024-04-01' = {
+  name: 'EnhancedPolicy-${workloadName}-${sequenceFormatted}'
+  parent: recoveryServicesVault
+  properties: union(backupPolicyCommonProperties, backupPolicyIaasVmProperties)
+}
+
+// Create a single Azure File backup policy, even if there are multiple file shares or storage accounts
+resource filesBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2024-04-01' = if (length(protectedAzureFileShares) > 0) {
+  name: 'AzureFileSharesPolicy-${workloadName}-${sequenceFormatted}'
+  parent: recoveryServicesVault
+  properties: union(backupPolicyCommonProperties, backupPolicyAzureStorageProperties)
+}
+
+// Create a protected item per Azure File Share to be protected
+module fileShareProtectedItems 'rsvProtectedItem-fs.bicep' = [
+  for fileShare in protectedAzureFileShares: {
+    name: take(replace(deploymentNameStructure, '{rtype}', 'rsv-fs-${fileShare}'), 64)
+    params: {
+      backupPolicyName: filesBackupPolicy.name
+      fileShareName: fileShare
+      recoveryServicesVaultId: recoveryServicesVault.id
+      storageAccountId: protectedStorageAccountId
+    }
+  }
+]
 
 // Lock the Recovery Services Vault to prevent accidental deletion
 resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (!debugMode) {
@@ -216,7 +209,7 @@ resource lock 'Microsoft.Authorization/locks@2020-05-01' = if (!debugMode) {
 
 output id string = recoveryServicesVault.id
 output name string = recoveryServicesVault.name
-output backupPolicyName string = enhancedBackupPolicy.name
+output vmBackupPolicyName string = iaasVmBackupPolicy.name
 
 // For debug purposes only
 output backupResourceGroupNameStructure string = '${azureBackupRGNamePrefix}{N}${azureBackupRGNameSuffix}'

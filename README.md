@@ -28,7 +28,7 @@ Compliance with all the above frameworks is a work-in-progress.
 
 ## Deployment
 
-Deployment documentation is found in the [Wiki](wiki/Deployment).
+Deployment documentation is found in the [Wiki](/../../wiki/Deployment).
 
 ## Alternative research enclave accelerators
 

@@ -1,0 +1,5 @@
+TOPIC
+    about_AzSubscriptionManagement
+
+SHORT DESCRIPTION
+    Helper functions to work with subscriptions in PowerShell.

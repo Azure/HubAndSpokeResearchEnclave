@@ -36,7 +36,7 @@ param storageAccountPrivateEndpointGroups array = [
   'file'
 ]
 
-@description('Role assignements to create on the storage account.')
+@description('Role assignments to create on the storage account.')
 param storageAccountRoleAssignments roleAssignmentType
 
 import { roleAssignmentType } from '../../../shared-modules/types/roleAssignment.bicep'
@@ -155,7 +155,7 @@ module storageAccountModule 'storageAccount.bicep' = {
   }
 }
 
-resource hubManagementRg 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
+resource hubManagementRg 'Microsoft.Resources/resourceGroups@2024-03-01' existing = if (domainJoin && length(fileShareNames) > 0) {
   name: hubManagementRgName
   scope: subscription(hubSubscriptionId)
 }
