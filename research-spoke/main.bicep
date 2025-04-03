@@ -95,9 +95,9 @@ param adOuPath string = ''
 param storageAccountOuPath string = adOuPath
 @description('Optional. The number of Azure Virtual Desktop session hosts to create in the pool. Defaults to 1.')
 param sessionHostCount int = 1
-@description('The prefix used for the computer names of the session host(s). Maximum 11 characters.')
+@description('The prefix used for the computer names of the session host(s). Maximum 11 characters. If not specified, the default session host names will be used.')
 @maxLength(11)
-param sessionHostNamePrefix string = 'N/A'
+param customSessionHostNamePrefix string = ''
 @description('A valid Azure Virtual Machine size. Use `az vm list-sizes --location "<region>"` to retrieve a list for the selected location')
 param sessionHostSize string = 'N/A'
 @description('If true, will configure the deployment of AVD to make the AVD session hosts usable as research VMs. This will give full desktop access, flow the AVD traffic through the firewall, etc.')
@@ -566,6 +566,7 @@ module privateStContainerRbacModule '../module-library/roleAssignments/roleAssig
 
 module privateStFileShareRbacModule '../module-library/roleAssignments/roleAssignment-st-fileShare.bicep' = [
   for shareName in items(fileShareNames): {
+    #disable-next-line BCP334
     name: take(replace(deploymentNameStructure, '{rtype}', 'st-priv-fs-${shareName.key}-rbac'), 64)
     scope: storageRg
     params: {
@@ -578,7 +579,17 @@ module privateStFileShareRbacModule '../module-library/roleAssignments/roleAssig
   }
 ]
 
+// Construct the session hosts' VM name prefix using the pattern "SH-{workloadName}-{sequence}",
+// taking into account that the max length of the vmNamePrefix is 11 characters
+var vmNamePrefixLead = 'sh-'
+var vmNamePrefixWorkloadName = take(workloadName, 11 - length(string(sequence)) - length('sh-'))
+var vmNamePrefix = empty(customSessionHostNamePrefix)
+  ? '${vmNamePrefixLead}${vmNamePrefixWorkloadName}${sequence}'
+  : customSessionHostNamePrefix
+
 module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionHostAsResearchVm) {
+  // This warning is incorrect
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'vdi'), 64)
   params: {
     resourceGroupName: replace(rgNamingStructure, '{rgname}', 'avd')
@@ -612,7 +623,7 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     // TODO: Use activeDirectoryDomainInfo type
     domainJoinPassword: domainJoinPassword
     domainJoinUsername: domainJoinUsername
-    sessionHostNamePrefix: sessionHostNamePrefix
+    sessionHostNamePrefix: vmNamePrefix
     sessionHostSize: sessionHostSize
 
     adDomainFqdn: adDomainFqdn
