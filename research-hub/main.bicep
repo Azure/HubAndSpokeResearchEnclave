@@ -141,7 +141,7 @@ param encryptionKeyExpirySeed string = utcNow()
  * Image Builder
  */
 
-@description('The subscription ID where the image build will take place. This might need to be different from the hub subscription because image building might not meet compliance requirements.')
+@description('The subscription ID where the image build will take place. This might need to be different from the hub subscription because image building might not meet compliance requirements. To avoid PowerShell errors, do not specify the parameter in the bicepparam file at all instead of leaving it blank.')
 param imageBuildSubscriptionId string = subscription().subscriptionId
 
 // TODO: If no custom DNS IPs are specified, create a private DNS zone for the virtual network for VM auto-registration
