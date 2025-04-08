@@ -6,6 +6,9 @@
 
 targetScope = 'subscription'
 
+metadata description = 'Deploys a research hub to be used with research spokes which are separately deployed.'
+metadata name = 'Research Hub'
+
 //------------------------------ START PARAMETERS ------------------------------
 
 @description('The Azure region for the deployment of resources. Use the Name of the region (not the DisplayName) from the output of \'az account list-locations\'.')
@@ -124,6 +127,9 @@ param ipAddressPool array
 
 @description('The IP addresses of the domain controllers in the Active Directory domain. Required if using AD join.')
 param domainControllerIPAddresses array = []
+
+@description('The GUID of the Log Analytics Workspace where virtual machine logs will be sent. This will be used to create a firewall rule. If left empty, all Log Analytics Workspaces will be allowed.')
+param logAnalyticsWorkspaceId string = ''
 
 /*
  * Entra ID object IDs for role assignments
@@ -276,6 +282,8 @@ module networkModule 'hub-modules/networking/main.bicep' = {
     includeDnsFirewallRules: length(customDnsIPs) > 0
     ipAddressPool: ipAddressPool
     ipGroupNamingStructure: ipGroupNamingStructure
+
+    logAnalyticsWorkspaceId: logAnalyticsWorkspaceId
   }
 }
 
