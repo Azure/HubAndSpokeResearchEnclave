@@ -39,7 +39,7 @@ resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' e
   scope: subscription()
 }
 
-resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' = {
+resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-10-01' = {
   name: vaultName
   location: location
   tags: tags
@@ -69,9 +69,17 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' = 
     }
 
     securitySettings: {
-      // Default to immutable but don't lock the policy
+      // Unless in debug mode, default to immutable but don't lock the policy
       immutabilitySettings: {
         state: debugMode ? 'Disabled' : 'Unlocked'
+      }
+
+      softDeleteSettings: {
+        // Unless in debug mode, default to Enabled but not Always On
+        softDeleteState: debugMode ? 'Disabled' : 'Enabled'
+        // 14 days is both the default and the minimum
+        softDeleteRetentionPeriodInDays: 14
+        enhancedSecurityState: 'Disabled'
       }
     }
 
