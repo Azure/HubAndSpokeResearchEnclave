@@ -32,28 +32,44 @@ if ($NWversion -lt "4.15.0") {
 
 Select-AzSubscription $SubscriptionId -Tenant $Tenant | Out-Null
 $VaultToDelete = Get-AzRecoveryServicesVault -Name $VaultName -ResourceGroupName $ResourceGroup
+
+$isVaultSoftDeleteFeatureEnabled = $VaultToDelete.Properties.SoftDeleteSettings.SoftDeleteState -ne 'Disabled'
+$isVaultImmutabilityEnabled = $VaultToDelete.Properties.ImmutabilitySettings.ImmutabilityState -ne 'Disabled'
+
 # Ignore WhatIfPreference here because future cmdlets will fail without this being set
 # This should have no side effects
 Set-AzRecoveryServicesAsrVaultContext -Vault $VaultToDelete -WhatIf:$false
 
-$UpdatedVault = Update-AzRecoveryServicesVault -ResourceGroupName $VaultToDelete.ResourceGroupName -Name $VaultToDelete.Name -ImmutabilityState "Disabled"
-Write-Host "Immutability state set to $($UpdatedVault.Properties.ImmutabilitySettings.ImmutabilityState)"
 
-Set-AzRecoveryServicesVaultProperty -Vault $VaultToDelete.ID -SoftDeleteFeatureState Disable #disable soft delete
-Write-Host "Soft delete disabled for the vault" $VaultName
-$containerSoftDelete = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureVM -WorkloadType AzureVM -VaultId $VaultToDelete.ID | Where-Object { $_.DeleteState -eq "ToBeDeleted" } #fetch backup items in soft delete state
-foreach ($softitem in $containerSoftDelete) {
-	Undo-AzRecoveryServicesBackupItemDeletion -Item $softitem -VaultId $VaultToDelete.ID -Force #undelete items in soft delete state
+if ($isVaultImmutabilityEnabled) {
+	$UpdatedVault = Update-AzRecoveryServicesVault -ResourceGroupName $VaultToDelete.ResourceGroupName -Name $VaultToDelete.Name -ImmutabilityState "Disabled"
+	Write-Host "Immutability state set to $($UpdatedVault.Properties.ImmutabilitySettings.ImmutabilityState)"
+}
+else {
+	Write-Host "Immutability state is already disabled for the vault"
 }
 
-# Fetch MSSQL backup items in soft delete state
-$containerSoftDeleteSql = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureWorkload -WorkloadType MSSQL -VaultId $VaultToDelete.ID | Where-Object { $_.DeleteState -eq "ToBeDeleted" }
-foreach ($softitemsql in $containerSoftDeleteSql) {
-	Undo-AzRecoveryServicesBackupItemDeletion -Item $softitemsql -VaultId $VaultToDelete.ID -Force #undelete items in soft delete state
+if ($isVaultSoftDeleteFeatureEnabled) {
+	Set-AzRecoveryServicesVaultProperty -VaultId $VaultToDelete.ID -SoftDeleteFeatureState Disable | Out-Null #disable soft delete
+	Write-Host "Soft delete disabled for the vault " $VaultName
+
+	$containerSoftDelete = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureVM -WorkloadType AzureVM -VaultId $VaultToDelete.ID | Where-Object { $_.DeleteState -eq "ToBeDeleted" } #fetch backup items in soft delete state
+	foreach ($softitem in $containerSoftDelete) {
+		Undo-AzRecoveryServicesBackupItemDeletion -Item $softitem -VaultId $VaultToDelete.ID -Force #undelete items in soft delete state
+	}
+
+	# Fetch MSSQL backup items in soft delete state
+	$containerSoftDeleteSql = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureWorkload -WorkloadType MSSQL -VaultId $VaultToDelete.ID | Where-Object { $_.DeleteState -eq "ToBeDeleted" }
+	foreach ($softitemsql in $containerSoftDeleteSql) {
+		Undo-AzRecoveryServicesBackupItemDeletion -Item $softitemsql -VaultId $VaultToDelete.ID -Force #undelete items in soft delete state
+	}
+}
+else {
+	Write-Host "Soft delete is already disabled for the vault"
 }
 
 # Invoking API to disable Security features (Enhanced Security) to remove MARS/MAB/DPM servers.
-Set-AzRecoveryServicesVaultProperty -VaultId $VaultToDelete.ID -DisableHybridBackupSecurityFeature $true
+Set-AzRecoveryServicesVaultProperty -VaultId $VaultToDelete.ID -DisableHybridBackupSecurityFeature $true | Out-Null
 Write-Host "Disabled Security features for the vault"
 
 # Fetch all protected items and servers
@@ -126,7 +142,7 @@ foreach ($item in $backupServersDPM) {
 Write-Host "Deleted DPM Servers"
 Write-Host "Ensure that you stop protection and delete backup items from the respective MARS, MAB and DPM consoles as well. Visit https://go.microsoft.com/fwlink/?linkid=2186234 to learn more." -ForegroundColor Yellow
 
-#Deletion of ASR Items
+# Deletion of ASR Items
 $fabricObjects = Get-AzRecoveryServicesAsrFabric
 if ($null -ne $fabricObjects) {
 	# First DisableDR all VMs.
@@ -197,7 +213,7 @@ if ($null -ne $fabricObjects) {
 	}
 }
 
-#Recheck presence of backup items in vault
+# Recheck presence of backup items in vault
 $backupItemsVMFin = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureVM -WorkloadType AzureVM -VaultId $VaultToDelete.ID
 $backupItemsSQLFin = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureWorkload -WorkloadType MSSQL -VaultId $VaultToDelete.ID
 $backupContainersSQLFin = Get-AzRecoveryServicesBackupContainer -ContainerType AzureVMAppContainer -VaultId $VaultToDelete.ID | Where-Object { $_.ExtendedInfo.WorkloadType -eq "SQL" }
@@ -211,7 +227,7 @@ $backupServersMABSFin = Get-AzRecoveryServicesBackupManagementServer -VaultId $V
 $backupServersDPMFin = Get-AzRecoveryServicesBackupManagementServer -VaultId $VaultToDelete.ID | Where-Object { $_.BackupManagementType -eq "SCDPM" }
 $pvtendpointsFin = Get-AzPrivateEndpointConnection -PrivateLinkResourceId $VaultToDelete.ID
 
-#Display items which are still present in the vault and might be preventing vault deletion.
+# Display items which are still present in the vault and might be preventing vault deletion.
 if ($backupItemsVMFin.count -ne 0) { Write-Host $backupItemsVMFin.count "Azure VM backups are still present in the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
 if ($backupItemsSQLFin.count -ne 0) { Write-Host $backupItemsSQLFin.count "SQL Server Backup Items are still present in the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
 if ($backupContainersSQLFin.count -ne 0) { Write-Host $backupContainersSQLFin.count "SQL Server Backup Containers are still registered to the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
@@ -236,7 +252,7 @@ if ($PSCmdlet.ShouldProcess($VaultName, "DELETE")) {
 		ResourceProviderName = 'Microsoft.RecoveryServices'
 		ResourceType         = 'vaults'
 		Name                 = $VaultName
-		ApiVersion           = '2024-04-01'
+		ApiVersion           = '2024-10-01'
 	}
 
 	$Response = Invoke-AzRestMethod @RestMethodParameters
