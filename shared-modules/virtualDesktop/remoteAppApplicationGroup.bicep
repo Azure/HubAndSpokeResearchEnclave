@@ -5,7 +5,7 @@ param friendlyName string
 param applications array
 param tags object
 
-param principalId string
+param principalId string[]
 param roleDefinitionId string
 
 /*
@@ -64,15 +64,15 @@ resource remoteApplications 'Microsoft.DesktopVirtualization/applicationGroups/a
 ]
 
 // Assign the specified role to the specified principal
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =
-  if (!empty(principalId) && !empty(roleDefinitionId)) {
-    name: guid(applicationGroup.id, principalId, roleDefinitionId)
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+  for userId in principalId: if (!empty(roleDefinitionId)) {
+    name: guid(applicationGroup.id, userId, roleDefinitionId)
     scope: applicationGroup
     properties: {
       roleDefinitionId: roleDefinitionId
-      principalId: principalId
+      principalId: userId
     }
-  }
+  }]
 
 output id string = applicationGroup.id
 output name string = applicationGroup.name

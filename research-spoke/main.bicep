@@ -104,6 +104,8 @@ param sessionHostSize string = 'N/A'
 param useSessionHostAsResearchVm bool = true
 @description('Entra ID object ID of the user or group (researchers) to assign permissions to access the AVD application groups and storage.')
 param researcherEntraIdObjectId string
+@description('Entra ID object ID of the user or group (honest brokers) to assign permissions to access the AVD application groups and storage.')
+param honestBrokerEntraIdObjectId string
 @description('Entra ID object ID of the admin user or group to assign permissions to administer the AVD session hosts, storage, etc.')
 param adminEntraIdObjectId string
 
@@ -483,6 +485,13 @@ var storageAccountReaderRoleAssignmentForResearcherGroup = {
   description: 'Read access to the storage account is required to use Azure Storage Explorer.'
 }
 
+// [Add for honestBrokerEntraIdObjectId]
+var storageAccountReaderRoleAssignmentForHonestBrokerGroup = {
+  roleDefinitionId: rolesModule.outputs.roles.Reader
+  principalId: honestBrokerEntraIdObjectId
+  description: 'Read access to the storage account is required to use Azure Storage Explorer.'
+}
+
 // Deploy the project's private storage account
 module storageModule './spoke-modules/storage/main.bicep' = {
   name: take(replace(deploymentNameStructure, '{rtype}', 'storage'), 64)
@@ -606,7 +615,10 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     logonType: logonType
     namingStructure: replace(namingStructure, '{subWorkloadName}', 'avd')
     roles: rolesModule.outputs.roles
-    userObjectId: researcherEntraIdObjectId
+    userObjectId: [
+      researcherEntraIdObjectId
+      honestBrokerEntraIdObjectId
+    ]
     workspaceFriendlyName: workspaceFriendlyName
 
     computeSubnetId: networkModule.outputs.createdSubnets.computeSubnet.id
@@ -664,6 +676,13 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
     airlockFileShareName: isAirlockReviewCentralized ? centralAirlockFileShareName : fileShareNames.exportReview
 
     approverEmail: airlockApproverEmail
+    
+    // TODO: Refactor
+    honestBrokerEntraObjectId: honestBrokerEntraIdObjectId
+    honestBrokerRoleDefinitionId: rolesModule.outputs.roles.StorageFileDataSMBShareReader
+    airlockStorageAccountRoleAssignments: [
+      storageAccountReaderRoleAssignmentForHonestBrokerGroup
+    ]
 
     deploymentNameStructure: deploymentNameStructure
     namingConvention: namingConvention
