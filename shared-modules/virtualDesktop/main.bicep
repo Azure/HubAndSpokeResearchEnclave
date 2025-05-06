@@ -3,7 +3,7 @@ targetScope = 'subscription'
 param resourceGroupName string
 
 param adminObjectId string
-param userObjectId string
+param userObjectId string[]
 param deploymentNameStructure string
 param desktopAppGroupFriendlyName string
 param logonType string

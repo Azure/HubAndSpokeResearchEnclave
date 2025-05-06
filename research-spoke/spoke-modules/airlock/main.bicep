@@ -17,6 +17,10 @@ param useCentralizedReview bool
 
 param researcherAadObjectId string
 
+param honestBrokerEntraObjectId string
+param honestBrokerRoleDefinitionId string
+param airlockStorageAccountRoleAssignments roleAssignmentType
+
 @description('The names of the ingest and exportApproved containers in the public storage account; and exportRequest in the private storage account.')
 param containerNames object = {
   ingest: 'ingest'
@@ -108,6 +112,19 @@ module uamiModule '../../../shared-modules/security/uami.bicep' = {
   }
 }
 
+
+module spokeAirlockStFileShareRbacModule '../../../module-library/roleAssignments/roleAssignment-st-fileShare.bicep' ={
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'st-airlock-fs-${airlockFileShareName}-rbac'), 64)
+  params: {
+    fileShareName: airlockFileShareName
+    principalId: honestBrokerEntraObjectId
+    roleDefinitionId: honestBrokerRoleDefinitionId
+    storageAccountName: spokeAirlockStorageAccountModule.outputs.storageAccountName
+    // Do not specify principalType here because we don't know if researcherEntraIdObjectId is a user or a group
+  }
+}
+
 module spokeAirlockStorageAccountModule '../storage/main.bicep' = if (!useCentralizedReview) {
   name: replace(deploymentNameStructure, '{rtype}', 'st-airlock')
   params: {
@@ -151,6 +168,8 @@ module spokeAirlockStorageAccountModule '../storage/main.bicep' = if (!useCentra
     uamiClientId: hubManagementVmUamiClientId
     roles: roles
 
+    storageAccountRoleAssignments: airlockStorageAccountRoleAssignments
+    
     // The airlock storage uses file shares via ADF, so access keys are used
     allowSharedKeyAccess: true
   }
