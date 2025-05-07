@@ -19,7 +19,6 @@ param researcherAadObjectId string
 
 param honestBrokerEntraObjectId string
 param honestBrokerRoleDefinitionId string
-param airlockStorageAccountRoleAssignments roleAssignmentType
 
 @description('The names of the ingest and exportApproved containers in the public storage account; and exportRequest in the private storage account.')
 param containerNames object = {
@@ -167,9 +166,7 @@ module spokeAirlockStorageAccountModule '../storage/main.bicep' = if (!useCentra
     uamiPrincipalId: hubManagementVmUamiPrincipalId
     uamiClientId: hubManagementVmUamiClientId
     roles: roles
-
-    storageAccountRoleAssignments: airlockStorageAccountRoleAssignments
-    
+ 
     // The airlock storage uses file shares via ADF, so access keys are used
     allowSharedKeyAccess: true
   }
