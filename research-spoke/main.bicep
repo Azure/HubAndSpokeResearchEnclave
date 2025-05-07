@@ -485,12 +485,6 @@ var storageAccountReaderRoleAssignmentForResearcherGroup = {
   description: 'Read access to the storage account is required to use Azure Storage Explorer.'
 }
 
-// [Add for honestBrokerEntraIdObjectId]
-var storageAccountReaderRoleAssignmentForHonestBrokerGroup = {
-  roleDefinitionId: rolesModule.outputs.roles.Reader
-  principalId: honestBrokerEntraIdObjectId
-  description: 'Read access to the storage account is required to use Azure Storage Explorer.'
-}
 
 // Deploy the project's private storage account
 module storageModule './spoke-modules/storage/main.bicep' = {
@@ -680,9 +674,6 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
     // TODO: Refactor
     honestBrokerEntraObjectId: honestBrokerEntraIdObjectId
     honestBrokerRoleDefinitionId: rolesModule.outputs.roles.StorageFileDataSMBShareReader
-    airlockStorageAccountRoleAssignments: [
-      storageAccountReaderRoleAssignmentForHonestBrokerGroup
-    ]
 
     deploymentNameStructure: deploymentNameStructure
     namingConvention: namingConvention
