@@ -609,7 +609,7 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     logonType: logonType
     namingStructure: replace(namingStructure, '{subWorkloadName}', 'avd')
     roles: rolesModule.outputs.roles
-    userObjectId: [
+    userObjectIds: [
       researcherEntraIdObjectId
       honestBrokerEntraIdObjectId
     ]

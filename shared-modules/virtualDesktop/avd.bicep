@@ -6,7 +6,7 @@ param workspaceFriendlyName string
 param remoteAppApplicationGroupInfo remoteAppApplicationGroup[] = []
 
 @description('Entra ID object ID of the user or group to be assigned to the Desktop Virtualization User (dvu) role.')
-param userObjectId string[] = []
+param userObjectIds string[] = []
 
 @description('Entra ID object ID of the user or group to be assigned to the Virtual Machine Administrator Login (vmal) role, if using Entra ID join.')
 param adminObjectId string
@@ -128,11 +128,11 @@ resource desktopApplicationGroup 'Microsoft.DesktopVirtualization/applicationGro
 
 // Create a role assignment for the user or group to be assigned to the Virtual Machine User Login (vmul) role, if using Entra ID join
 resource rgRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
-  for userId in userObjectId: if (logonType == 'entraID') {
-    name: guid(resourceGroup().id, userId, roles.VirtualMachineUserLogin)
+  for userObjectId in userObjectIds: if (logonType == 'entraID') {
+    name: guid(resourceGroup().id, userObjectId, roles.VirtualMachineUserLogin)
     properties: {
       roleDefinitionId: roles.VirtualMachineUserLogin
-      principalId: userId
+      principalId: userObjectId
     }
   }
 ]
@@ -150,12 +150,12 @@ resource rgAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
 // LATER: Execute deployment script for Update-AzWvdDesktop -ResourceGroupName resourceGroup().name -ApplicationGroupName desktopApplicationGroup.name -Name SessionDesktop -FriendlyName desktopAppGroupFriendlyName
 
 resource dagUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
-  for userId in userObjectId: if (logonType == 'entraID') {
-    name: guid(desktopApplicationGroup.id, userId, roles.DesktopVirtualizationUser)
+  for userObjectId in userObjectIds: if (logonType == 'entraID') {
+    name: guid(desktopApplicationGroup.id, userObjectId, roles.DesktopVirtualizationUser)
     scope: desktopApplicationGroup
     properties: {
       roleDefinitionId: roles.DesktopVirtualizationUser
-      principalId: userId
+      principalId: userObjectId
     }
   }
 ]
@@ -187,7 +187,7 @@ module remoteAppApplicationGroupsModule 'remoteAppApplicationGroup.bicep' = [
       friendlyName: appGroup.friendlyName
       hostPoolId: hostPool.id
 
-      principalId: userObjectId
+      principalId: userObjectIds
       roleDefinitionId: roles.DesktopVirtualizationUser
     }
   }
