@@ -187,7 +187,7 @@ module remoteAppApplicationGroupsModule 'remoteAppApplicationGroup.bicep' = [
       friendlyName: appGroup.friendlyName
       hostPoolId: hostPool.id
 
-      principalId: userObjectIds
+      principalObjectIds: userObjectIds
       roleDefinitionId: roles.DesktopVirtualizationUser
     }
   }
