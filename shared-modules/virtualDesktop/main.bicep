@@ -3,7 +3,7 @@ targetScope = 'subscription'
 param resourceGroupName string
 
 param adminObjectId string
-param userObjectId string[]
+param userObjectIds string[]
 param deploymentNameStructure string
 param desktopAppGroupFriendlyName string
 param logonType string
@@ -66,7 +66,7 @@ module avdModule 'avd.bicep' = {
     tags: tags
     workspaceFriendlyName: workspaceFriendlyName
     usePrivateLinkForHostPool: usePrivateLinkForHostPool
-    userObjectId: userObjectId
+    userObjectIds: userObjectIds
   }
 }
 
