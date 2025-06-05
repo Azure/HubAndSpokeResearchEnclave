@@ -1,15 +1,13 @@
 ARG PWSH_VER="7.5.1"
 ARG BICEP_VER="0.36.1"
 ARG TERRAFORM_VER="1.12.1"
-ARG AZ_ACCOUNTS_MODULE_VER="4.0.2"
 ARG AZ_RESOURCES_MODULE_VER="7.5.0"
 
-FROM mcr.microsoft.com/devcontainers/base:1.2.4-ubuntu22.04
+FROM mcr.microsoft.com/devcontainers/base:2.0.1-ubuntu24.04
 ARG PWSH_VER
 ARG BICEP_VER
 ARG TERRAFORM_VER
 ARG AZ_RESOURCES_MODULE_VER
-ARG AZ_ACCOUNTS_MODULE_VER
 
 
 USER root
@@ -26,8 +24,14 @@ RUN wget "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VER
     && pwsh -Command "Import-Module -Name posh-git" \
     && pwsh -Command "Install-Module -Name Az.Resources -MaximumVersion ${AZ_RESOURCES_MODULE_VER} -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
     && pwsh -Command "Import-Module -Name Az.Resources" \
-    && pwsh -Command "Install-Module -Name Az.Accounts -MaximumVersion ${AZ_ACCOUNTS_MODULE_VER} -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
+    && pwsh -Command "Install-Module -Name Az.Accounts -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
     && pwsh -Command "Import-Module -Name Az.Accounts" \
+    && pwsh -Command "Install-Module -Name Az.Compute -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
+    && pwsh -Command "Import-Module -Name Az.Compute" \
+    && pwsh -Command "Install-Module -Name Az.Network -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
+    && pwsh -Command "Import-Module -Name Az.Network" \
+    && pwsh -Command "Install-Module -Name Az.Storage -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
+    && pwsh -Command "Import-Module -Name Az.Storage" \
     && pwsh -Command "Install-Module -Name Pester -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
     && pwsh -Command "Import-Module -Name Pester" \
     && pwsh -Command "Install-Module -Name PSReadLine -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
@@ -50,7 +54,8 @@ RUN  wget -O"terraform_${TERRAFORM_VER}_linux_amd64.zip" "https://releases.hashi
 USER vscode
 RUN curl -s https://ohmyposh.dev/install.sh | bash -s \
     && pwsh -Command 'New-Item -Path $PROFILE -ItemType File -Force' \
-    && pwsh -Command "'New-Alias \"tf\" \"terraform\"' | Out-File -FilePath \$PROFILE" \
+    && pwsh -Command "'\$Env:GPG_TTY = \"\$(tty)\"' | Out-File -FilePath \$PROFILE" \
+    && pwsh -Command "'New-Alias \"tf\" \"terraform\"' | Out-File -Append -FilePath \$PROFILE" \
     && pwsh -Command "'Import-Module -Name posh-git' | Out-File -Append -FilePath \$PROFILE" \
     && pwsh -Command "'oh-my-posh init pwsh | Invoke-Expression' | Out-File -Append -FilePath \$PROFILE"
 
