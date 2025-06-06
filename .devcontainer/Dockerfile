@@ -34,8 +34,6 @@ RUN wget "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VER
     && pwsh -Command "Import-Module -Name Az.Storage" \
     && pwsh -Command "Install-Module -Name Pester -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
     && pwsh -Command "Import-Module -Name Pester" \
-    && pwsh -Command "Install-Module -Name PSReadLine -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
-    && pwsh -Command "Import-Module -Name PSReadLine" \
     && pwsh -Command "Set-PSRepository -Name PSGallery -InstallationPolicy Untrusted"
 
 
