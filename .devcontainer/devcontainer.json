@@ -8,6 +8,14 @@
         // Path is relative to the devcontainer.json file.
         "dockerfile": "Dockerfile"
     },
+	// Uncomment the following and replace <username> with your username in WSL
+	// "mounts": [
+  	// 	{
+    // 	"source": "/home/<username>/.local/share/powershell/PSReadLine",
+    // 	"target": "/home/vscode/.local/share/powershell/PSReadLine",
+    // 	"type": "bind"
+  	// 	}
+	// ],
 	"customizations": {
 		"vscode": {
 			"extensions": [
