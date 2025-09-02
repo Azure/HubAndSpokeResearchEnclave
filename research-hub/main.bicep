@@ -379,6 +379,7 @@ module diskEncryptionSetModule '../shared-modules/security/diskEncryptionSet.bic
     name: replace(resourceNamingStructureNoSub, '{rtype}', 'des')
     kvRoleDefinitionId: rolesModule.outputs.roles.KeyVaultCryptoServiceEncryptionUser
   }
+  dependsOn: [uamiKvRbacModule]
 }
 
 /*
