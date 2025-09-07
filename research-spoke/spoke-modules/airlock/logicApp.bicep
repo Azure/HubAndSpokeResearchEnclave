@@ -15,7 +15,7 @@ param privateFileShareName string
 param approverEmail string
 param processNotificationEmail string
 param sourceFolderPath string
-param sinkFolderPath string // TODO: Rename to airlockFolderPath
+param airlockFolderPath string
 param exportApprovedContainerName string
 param privateContainerName string
 
@@ -172,7 +172,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
         value: airlockFileShareName
       }
       airlockFolderPath: {
-        value: sinkFolderPath
+        value: airlockFolderPath
       }
       publicStorageAccountName: {
         value: prjPublicStorageAcctName

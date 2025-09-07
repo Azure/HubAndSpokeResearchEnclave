@@ -271,7 +271,9 @@ module logicAppModule 'logicApp.bicep' = {
     airlockStorageAcctName: airlockStorageAccountName
     adfName: adfModule.outputs.name
     approverEmail: approverEmail
-    sinkFolderPath: spokePrivateStorageAccountName
+    // Create a folder in the Airlock file share with the name of the private storage account,
+    // which ensures uniqueness if multiple spokes use the same airlock review storage account
+    airlockFolderPath: spokePrivateStorageAccountName
     sourceFolderPath: containerNames.exportRequest
     prjPublicStorageAcctName: publicStorageAccountModule.outputs.name
     keyVaultUri: airlocKeyVaultUri
