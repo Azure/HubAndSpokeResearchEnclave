@@ -88,6 +88,29 @@
                   "x-ms-api-version": "2017-09-01-preview"
                 }
               }
+            },
+            "Send_approval_email_to_PI": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['office365']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "body": {
+                  "To": "@parameters('processNotificationEmail')",
+                  "Subject": "Airlock Export Request Approved",
+                  "Body": "<p class=\"editor-paragraph\">@{parameters('approverEmail')} approved the export request of file \"@{parameters('airlockFolderPath')}/@{triggerBody()?['Name']}\".</p><br><p class=\"editor-paragraph\">The file is being moved to the project's external storage account in the \"@{parameters('exportApprovedContainerName')}\" blob container. This usually takes 1-2 minutes.</p>",
+                  "Importance": "Normal"
+                },
+                "path": "/v2/Mail"
+              },
+              "runAfter": {
+                "Move_file_from_Airlock_File_Share_to_public_ADLS": [
+                  "Succeeded"
+                ]
+              }
             }
           },
           "else": {
@@ -116,6 +139,29 @@
                   "queries": {
                     "x-ms-api-version": "2017-09-01-preview"
                   }
+                }
+              },
+              "Send_rejection_email_to_PI": {
+                "type": "ApiConnection",
+                "inputs": {
+                  "host": {
+                    "connection": {
+                      "name": "@parameters('$connections')['office365']['connectionId']"
+                    }
+                  },
+                  "method": "post",
+                  "body": {
+                    "To": "@parameters('processNotificationEmail')",
+                    "Subject": "Airlock Export Request Rejected by Approver",
+                    "Body": "<p class=\"editor-paragraph\">@{parameters('approverEmail')} rejected the export request of file \"@{parameters('airlockFolderPath')}/@{triggerBody()?['Name']}\".</p><br><p class=\"editor-paragraph\">The file is being moved back to the project's file share in the \"export-rejected\" folder. This usually takes 1-2 minutes.</p>",
+                    "Importance": "Normal"
+                  },
+                  "path": "/v2/Mail"
+                },
+                "runAfter": {
+                  "Move_file_from_Airlock_File_Share_to_private_File_Share_rejected_folder": [
+                    "Succeeded"
+                  ]
                 }
               }
             }
@@ -150,7 +196,7 @@
       },
       "else": {
         "actions": {
-          "Send_an_email_(V2)": {
+          "Send_failure_email_to_approver_and_PI": {
             "type": "ApiConnection",
             "inputs": {
               "host": {
@@ -160,9 +206,9 @@
               },
               "method": "post",
               "body": {
-                "To": "@parameters('approverEmail')",
-                "Subject": "Pipeline Failed",
-                "Body": "<p>Pipeline run failed</p>",
+                "To": "@{parameters('approverEmail')},@{parameters('processNotificationEmail')}",
+                "Subject": "Airlock Pipeline Failed",
+                "Body": "<p class=\"editor-paragraph\">Pipeline run failed moving file \"@{parameters('airlockFolderPath')}/@{triggerBody()?['Name']}\" from the spoke's export-requested container to the airlock file share.</p><br><p class=\"editor-paragraph\">For troubleshooting purposes:<br>Data Factory pipeline run ID: @{body('Move_file_from_private_ADLS_to_Airlock_File_Share')?['runId']}</p><p class=\"editor-paragraph\">Data Factory pipeline status: @{variables('pipelineStatus')}</p>",
                 "Importance": "Normal"
               },
               "path": "/v2/Mail"
