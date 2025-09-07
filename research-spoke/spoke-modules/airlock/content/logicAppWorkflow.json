@@ -126,7 +126,7 @@
                   "method": "post",
                   "body": {
                     "fileName": "@triggerBody()?['Name']",
-                    "sinkFolderPath": "export-rejected",
+                    "sinkFolderPath": "@parameters('exportRejectedFolderName')",
                     "sinkFileShareName": "@parameters('privateFileShareName')",
                     "sinkStorageAccountName": "@parameters('privateStorageAccountName')",
                     "sourceConnStringKvBaseUrl": "@parameters('airlockConnStringKvBaseUrl')",
@@ -348,6 +348,10 @@
     "$connections": {
       "type": "Object",
       "defaultValue": {}
+    },
+    "exportRejectedFolderName": {
+      "type": "String",
+      "defaultValue": "export-rejected"
     }
   },
   "triggers": {
