@@ -135,7 +135,7 @@
                     "sourceStorageAccountName": "@parameters('airlockStorageAccountName')",
                     "sinkConnStringKvBaseUrl": "@parameters('privateConnStringKvBaseUrl')"
                   },
-                  "path": "/subscriptions/@{encodeURIComponent(parameters('subscriptionId'))}/resourcegroups/@{encodeURIComponent(parameters('dataFactoryRG'))}/providers/Microsoft.DataFactory/factories/@{encodeURIComponent(parameters('dataFactoryName'))}/pipelines/@{encodeURIComponent('pipe-data_move-files_to_files')}/CreateRun",
+                  "path": "/subscriptions/@{encodeURIComponent(parameters('subscriptionId'))}/resourcegroups/@{encodeURIComponent(parameters('dataFactoryRG'))}/providers/Microsoft.DataFactory/factories/@{encodeURIComponent(parameters('dataFactoryName'))}/pipelines/@{encodeURIComponent(parameters('pipelineNameFileShareToFileShare'))}/CreateRun",
                   "queries": {
                     "x-ms-api-version": "2017-09-01-preview"
                   }
