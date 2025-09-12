@@ -345,6 +345,10 @@
       "defaultValue": "",
       "type": "String"
     },
+    "pipelineNameFileShareToFileShare": {
+      "defaultValue": "",
+      "type": "String"
+    },
     "$connections": {
       "type": "Object",
       "defaultValue": {}
