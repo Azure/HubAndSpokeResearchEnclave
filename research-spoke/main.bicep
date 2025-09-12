@@ -114,6 +114,8 @@ param adminEntraIdObjectId string
 param isAirlockReviewCentralized bool = false
 @description('The email address of the reviewer for this project.')
 param airlockApproverEmail string
+@description('The email address where process notifications (designed to be the principal investigator) will be sent.')
+param airlockProcessNotificationEmail string
 @description('The allowed file extensions for ingest.')
 param allowedIngestFileExtensions array = []
 
@@ -485,7 +487,6 @@ var storageAccountReaderRoleAssignmentForResearcherGroup = {
   description: 'Read access to the storage account is required to use Azure Storage Explorer.'
 }
 
-
 // Deploy the project's private storage account
 module storageModule './spoke-modules/storage/main.bicep' = {
   name: take(replace(deploymentNameStructure, '{rtype}', 'storage'), 64)
@@ -670,7 +671,7 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
     airlockFileShareName: isAirlockReviewCentralized ? centralAirlockFileShareName : fileShareNames.exportReview
 
     approverEmail: airlockApproverEmail
-    
+
     // TODO: Refactor
     honestBrokerEntraObjectId: honestBrokerEntraIdObjectId
     honestBrokerRoleDefinitionId: rolesModule.outputs.roles.StorageFileDataSMBShareReader
@@ -731,6 +732,8 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
     usePrivateEndpoints: usePrivateEndpoints
 
     allowedIngestFileExtensions: allowedIngestFileExtensions
+
+    processNotificationEmail: airlockProcessNotificationEmail
   }
 }
 
