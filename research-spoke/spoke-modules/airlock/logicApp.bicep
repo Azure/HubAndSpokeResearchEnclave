@@ -202,6 +202,9 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
       pipelineNameFileShareToBlob: {
         value: pipelineNames.fileShareToBlob
       }
+      pipelineNameFileShareToFileShare: {
+        value: pipelineNames.fileShareToFileShare
+      }
     }
   }
   tags: tags
