@@ -31,6 +31,8 @@ param containerNames object = {
 param approverEmail string
 @description('The email address where process notifications (designed to be the principal investigator) will be sent.')
 param processNotificationEmail string
+@description('The email address that will appear in the "From" field of emails sent by the airlock Logic App.')
+param fromEmail string
 
 param roles object
 
@@ -290,6 +292,7 @@ module logicAppModule 'logicApp.bicep' = {
     privateContainerName: containerNames.exportRequest
     privateFileShareName: spokePrivateFileShareName
     processNotificationEmail: processNotificationEmail
+    fromEmail: fromEmail
   }
 }
 

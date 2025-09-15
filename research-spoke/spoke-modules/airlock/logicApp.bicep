@@ -14,6 +14,7 @@ param airlockFileShareName string
 param privateFileShareName string
 param approverEmail string
 param processNotificationEmail string
+param fromEmail string
 param sourceFolderPath string
 param airlockFolderPath string
 param exportApprovedContainerName string
@@ -204,6 +205,9 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
       }
       pipelineNameFileShareToFileShare: {
         value: pipelineNames.fileShareToFileShare
+      }
+      fromEmail: {
+        value: fromEmail
       }
     }
   }
