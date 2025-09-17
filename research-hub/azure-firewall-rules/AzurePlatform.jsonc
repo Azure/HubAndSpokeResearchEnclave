@@ -175,6 +175,15 @@
           "destinationIpGroups": [],
           "destinationAddresses": ["168.63.129.16"],
           "destinationPorts": ["*"]
+        },
+        {
+          "ruleType": "NetworkRule",
+          "name": "AzureNTP",
+          "ipProtocols": ["UDP"],
+          "sourceIpGroups": ["{{ipAddressPool}}"],
+          "destinationIpGroups": [],
+          "destinationAddresses": ["168.61.215.74"],
+          "destinationPorts": ["123"]
         }
       ]
     }
