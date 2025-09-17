@@ -29,6 +29,8 @@ param containerNames object = {
 
 @description('The email address where export approval requests will be sent.')
 param approverEmail string
+@description('The email address where process notifications (designed to be the principal investigator) will be sent.')
+param processNotificationEmail string
 
 param roles object
 
@@ -111,8 +113,7 @@ module uamiModule '../../../shared-modules/security/uami.bicep' = {
   }
 }
 
-
-module spokeAirlockStFileShareRbacModule '../../../module-library/roleAssignments/roleAssignment-st-fileShare.bicep' ={
+module spokeAirlockStFileShareRbacModule '../../../module-library/roleAssignments/roleAssignment-st-fileShare.bicep' = {
   #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'st-airlock-fs-${airlockFileShareName}-rbac'), 64)
   params: {
@@ -166,7 +167,7 @@ module spokeAirlockStorageAccountModule '../storage/main.bicep' = if (!useCentra
     uamiPrincipalId: hubManagementVmUamiPrincipalId
     uamiClientId: hubManagementVmUamiClientId
     roles: roles
- 
+
     // The airlock storage uses file shares via ADF, so access keys are used
     allowSharedKeyAccess: true
   }
@@ -256,6 +257,7 @@ var airlockStorageAccountName = useCentralizedReview
 var airlocKeyVaultUri = useCentralizedReview
   ? centralizedModule.outputs.centralKeyVaultUri
   : keyVault.properties.vaultUri
+var spokeKeyVaultUri = keyVault.properties.vaultUri
 
 // Logic app for export review (moves file to airlock review storage account and sends approval email)
 module logicAppModule 'logicApp.bicep' = {
@@ -269,13 +271,25 @@ module logicAppModule 'logicApp.bicep' = {
     airlockStorageAcctName: airlockStorageAccountName
     adfName: adfModule.outputs.name
     approverEmail: approverEmail
-    sinkFolderPath: spokePrivateStorageAccountName
+    // Create a folder in the Airlock file share with the name of the private storage account,
+    // which ensures uniqueness if multiple spokes use the same airlock review storage account
+    airlockFolderPath: spokePrivateStorageAccountName
     sourceFolderPath: containerNames.exportRequest
     prjPublicStorageAcctName: publicStorageAccountModule.outputs.name
     keyVaultUri: airlocKeyVaultUri
     deploymentNameStructure: deploymentNameStructure
     roles: roles
     tags: tags
+    exportApprovedContainerName: containerNames.exportApproved
+    pipelineNames: {
+      blobToFileShare: adfModule.outputs.pipelineNames.blobToFileShare
+      fileShareToBlob: adfModule.outputs.pipelineNames.fileShareToBlob
+      fileShareToFileShare: adfModule.outputs.pipelineNames.fileShareToFileShare
+    }
+    privateConnStringKvBaseUrl: spokeKeyVaultUri
+    privateContainerName: containerNames.exportRequest
+    privateFileShareName: spokePrivateFileShareName
+    processNotificationEmail: processNotificationEmail
   }
 }
 
@@ -399,7 +413,7 @@ module ingestTriggerModule 'adfTrigger.bicep' = if (length(allowedIngestFileExte
     workspaceName: workspaceName
     storageAccountId: publicStorageAccountModule.outputs.id
     storageAccountType: 'Public'
-    ingestPipelineName: adfModule.outputs.pipelineName
+    ingestPipelineName: adfModule.outputs.pipelineNames.blobToFileShare
     #disable-next-line BCP334 BCP335
     sourceStorageAccountName: publicStorageAccountModule.outputs.name
     sinkStorageAccountName: spokePrivateStorageAccountName
@@ -421,7 +435,7 @@ module extensionIngestTriggersModule 'adfTrigger.bicep' = [
       workspaceName: workspaceName
       storageAccountId: publicStorageAccountModule.outputs.id
       storageAccountType: 'Public'
-      ingestPipelineName: adfModule.outputs.pipelineName
+      ingestPipelineName: adfModule.outputs.pipelineNames.blobToFileShare
       #disable-next-line BCP334 BCP335
       sourceStorageAccountName: publicStorageAccountModule.outputs.name
       sinkStorageAccountName: spokePrivateStorageAccountName

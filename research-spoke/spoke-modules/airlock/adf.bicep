@@ -22,9 +22,14 @@ param encryptionKeyVaultUri string
 
 param adfEncryptionKeyName string
 
+// TODO: Use pipelineNamesType
 param pipelineNameAdls2Files string = 'pipe-data_move-adls_to_files'
 param pipelineNameFilesToAdls string = 'pipe-data_move-files_to_adls'
+param pipelineNameFilesToFiles string = 'pipe-data_move-files_to_files'
+
 param debugMode bool
+
+import { pipelineNamesType } from '../../../shared-modules/types/pipelineNamesType.bicep'
 
 var baseName = !empty(subWorkloadName)
   ? replace(namingStructure, '{subWorkloadName}', subWorkloadName)
@@ -380,7 +385,7 @@ resource dfsDataset 'Microsoft.DataFactory/factories/datasets@2018-06-01' = {
   }
 }
 
-resource pipeline 'Microsoft.DataFactory/factories/pipelines@2018-06-01' = {
+resource pipelineAdls2Files 'Microsoft.DataFactory/factories/pipelines@2018-06-01' = {
   name: pipelineNameAdls2Files
   parent: adf
   properties: {
@@ -451,6 +456,46 @@ resource pipelineFilesToAdls 'Microsoft.DataFactory/factories/pipelines@2018-06-
   ]
 }
 
+resource pipelineFilesToFiles 'Microsoft.DataFactory/factories/pipelines@2018-06-01' = {
+  name: pipelineNameFilesToFiles
+  parent: adf
+  properties: {
+    activities: loadJsonContent('./content/adfPipeline-Files2Files.json')
+    parameters: {
+      sinkConnStringKvBaseUrl: {
+        type: 'String'
+      }
+      sinkFileShareName: {
+        type: 'String'
+      }
+      sourceStorageAccountName: {
+        type: 'String'
+      }
+      sinkStorageAccountName: {
+        type: 'String'
+      }
+      sourceFolderPath: {
+        type: 'String'
+      }
+      sinkFolderPath: {
+        type: 'String'
+      }
+      fileName: {
+        type: 'String'
+      }
+      sourceFileShareName: {
+        type: 'String'
+      }
+      sourceConnStringKvBaseUrl: {
+        type: 'String'
+      }
+    }
+  }
+  dependsOn: [
+    AzFilesDataset
+  ]
+}
+
 // LATER: Abstract to storage-RoleAssignment module
 var storageAccountRoleDefinitionId = roles.StorageBlobDataContributor
 
@@ -468,6 +513,9 @@ resource adfPrivateStgRole 'Microsoft.Authorization/roleAssignments@2022-04-01' 
 
 output principalId string = adf.identity.principalId
 output name string = adf.name
-// LATER: Rename output pipeline name
-output pipelineName string = pipelineNameAdls2Files
-output pipelineNameFilesToAdls string = pipelineNameFilesToAdls
+
+output pipelineNames pipelineNamesType = {
+  blobToFileShare: pipelineNameAdls2Files
+  fileShareToBlob: pipelineNameFilesToAdls
+  fileShareToFileShare: pipelineNameFilesToFiles
+}

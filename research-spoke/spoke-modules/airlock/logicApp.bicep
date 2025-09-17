@@ -11,18 +11,29 @@ param prjPublicStorageAcctName string
 @maxLength(24)
 param airlockStorageAcctName string
 param airlockFileShareName string
+param privateFileShareName string
 param approverEmail string
+param processNotificationEmail string
 param sourceFolderPath string
-param sinkFolderPath string
+param airlockFolderPath string
+param exportApprovedContainerName string
+param privateContainerName string
+
+param pipelineNames pipelineNamesType
 
 @description('The URI of the Key Vault that contains the connection string airlock review storage account.')
 param keyVaultUri string
+
+@description('The URI of the Key Vault that contains the connection string for the project private storage account\'s file share.')
+param privateConnStringKvBaseUrl string
 
 param roles object
 param deploymentNameStructure string
 
 param subWorkloadName string
 param tags object = {}
+
+import { pipelineNamesType } from '../../../shared-modules/types/pipelineNamesType.bicep'
 
 var baseName = !empty(subWorkloadName)
   ? replace(namingStructure, '{subWorkloadName}', subWorkloadName)
@@ -145,35 +156,54 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
       dataFactoryName: {
         value: adf.name
       }
-      sourceStorageAccountName: {
+      privateStorageAccountName: {
         value: prjStorageAcctName
       }
-      sourceFolderPath: {
+      privateFolderPath: {
         value: sourceFolderPath
       }
-      sinkStorageAccountName: {
+      airlockStorageAccountName: {
         value: airlockStorageAcctName
       }
-      notificationEmail: {
+      approverEmail: {
         value: approverEmail
       }
-      sinkFileShareName: {
+      airlockFileShareName: {
         value: airlockFileShareName
       }
-      sinkFolderPath: {
-        value: sinkFolderPath
+      airlockFolderPath: {
+        value: airlockFolderPath
       }
-      finalSinkStorageAccountName: {
+      publicStorageAccountName: {
         value: prjPublicStorageAcctName
       }
       // LATER: Add parameters for pipeline names
       airlockConnStringKvBaseUrl: {
         value: keyVaultUri
       }
-      // TODO: Add parameter for source container name (for trigger value)
+      privateContainerName: {
+        value: privateContainerName
+      }
       exportApprovedContainerName: {
-        // TODO: Do not hardcode container name
-        value: 'export-approved'
+        value: exportApprovedContainerName
+      }
+      processNotificationEmail: {
+        value: processNotificationEmail
+      }
+      privateFileShareName: {
+        value: privateFileShareName
+      }
+      privateConnStringKvBaseUrl: {
+        value: privateConnStringKvBaseUrl
+      }
+      pipelineNameBlobToFileShare: {
+        value: pipelineNames.blobToFileShare
+      }
+      pipelineNameFileShareToBlob: {
+        value: pipelineNames.fileShareToBlob
+      }
+      pipelineNameFileShareToFileShare: {
+        value: pipelineNames.fileShareToFileShare
       }
     }
   }

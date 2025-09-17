@@ -1,9 +1,12 @@
 {
   "cSpell.words": [
     "aadcdn",
+    "Adls",
     "ADWS",
     "autologon",
     "azkms",
+    "azureblob",
+    "azuredatafactory",
     "azureedge",
     "azureportal",
     "azuresynapse",
@@ -21,6 +24,7 @@
     "privatelink",
     "rdweb",
     "reactblade",
+    "resourcegroups",
     "sovereignprodimedatahotfix",
     "sovereignprodimedatapri",
     "sovereignprodimedatasec",
