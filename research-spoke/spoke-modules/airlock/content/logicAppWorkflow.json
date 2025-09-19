@@ -102,6 +102,7 @@
                   "To": "@parameters('processNotificationEmail')",
                   "Subject": "Airlock Export Request Approved",
                   "Body": "<p class=\"editor-paragraph\">@{parameters('approverEmail')} approved the export request of file \"@{parameters('airlockFolderPath')}/@{triggerBody()?['Name']}\".</p><br><p class=\"editor-paragraph\">The file is being moved to the project's external storage account in the \"@{parameters('exportApprovedContainerName')}\" blob container. This usually takes 1-2 minutes.</p>",
+                  "From": "@parameters('fromEmail')",
                   "Importance": "Normal"
                 },
                 "path": "/v2/Mail"
@@ -154,6 +155,7 @@
                     "To": "@parameters('processNotificationEmail')",
                     "Subject": "Airlock Export Request Rejected by Approver",
                     "Body": "<p class=\"editor-paragraph\">@{parameters('approverEmail')} rejected the export request of file \"@{parameters('airlockFolderPath')}/@{triggerBody()?['Name']}\".</p><br><p class=\"editor-paragraph\">The file is being moved back to the project's file share in the \"export-rejected\" folder. This usually takes 1-2 minutes.</p>",
+                    "From": "@parameters('fromEmail')",
                     "Importance": "Normal"
                   },
                   "path": "/v2/Mail"
@@ -183,6 +185,7 @@
               "Message": {
                 "To": "@parameters('approverEmail')",
                 "Body": "A new request for export has been received.\n\nFile: @{parameters('airlockFolderPath')}/@{triggerBody()?['Name']}",
+                "From": "@parameters('fromEmail')",
                 "Importance": "Normal",
                 "HideHTMLMessage": false,
                 "ShowHTMLConfirmationDialog": false,
@@ -209,6 +212,7 @@
                 "To": "@{parameters('approverEmail')},@{parameters('processNotificationEmail')}",
                 "Subject": "Airlock Pipeline Failed",
                 "Body": "<p class=\"editor-paragraph\">Pipeline run failed moving file \"@{parameters('airlockFolderPath')}/@{triggerBody()?['Name']}\" from the spoke's export-requested container to the airlock file share.</p><br><p class=\"editor-paragraph\">For troubleshooting purposes:<br>Data Factory pipeline run ID: @{body('Move_file_from_private_ADLS_to_Airlock_File_Share')?['runId']}</p><p class=\"editor-paragraph\">Data Factory pipeline status: @{variables('pipelineStatus')}</p>",
+                "From": "@parameters('fromEmail')",
                 "Importance": "Normal"
               },
               "path": "/v2/Mail"
@@ -356,6 +360,10 @@
     "exportRejectedFolderName": {
       "type": "String",
       "defaultValue": "export-rejected"
+    },
+    "fromEmail": {
+      "type": "String",
+      "defaultValue": ""
     }
   },
   "triggers": {
