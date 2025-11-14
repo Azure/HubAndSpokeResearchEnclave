@@ -24,7 +24,7 @@ The goal of the project is that the templates will deploy resources that are com
 - NIST 800-171 R2
 - FedRAMP Moderate
 
-Compliance with all the above frameworks is a work-in-progress.
+Compliance with all the above frameworks is a *work-in-progress*.
 
 ## Deployment
 
