@@ -116,6 +116,8 @@ param isAirlockReviewCentralized bool = false
 param airlockApproverEmail string
 @description('The email address where process notifications (designed to be the principal investigator) will be sent.')
 param airlockProcessNotificationEmail string
+@description('The email address that will appear in the "From" field of emails sent by the airlock Logic App.')
+param airlockFromEmail string
 @description('The allowed file extensions for ingest.')
 param allowedIngestFileExtensions array = []
 
@@ -734,6 +736,7 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
     allowedIngestFileExtensions: allowedIngestFileExtensions
 
     processNotificationEmail: airlockProcessNotificationEmail
+    fromEmail: airlockFromEmail
   }
 }
 
