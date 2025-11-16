@@ -21,11 +21,11 @@ param privateContainerName string
 
 param pipelineNames pipelineNamesType
 
-@description('The URI of the Key Vault that contains the connection string airlock review storage account.')
-param keyVaultUri string
+// @description('The URI of the Key Vault that contains the connection string airlock review storage account.')
+// param keyVaultUri string
 
-@description('The URI of the Key Vault that contains the connection string for the project private storage account\'s file share.')
-param privateConnStringKvBaseUrl string
+// @description('The URI of the Key Vault that contains the connection string for the project private storage account\'s file share.')
+// param privateConnStringKvBaseUrl string
 
 param roles object
 param deploymentNameStructure string
@@ -177,10 +177,9 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
       publicStorageAccountName: {
         value: prjPublicStorageAcctName
       }
-      // LATER: Add parameters for pipeline names
-      airlockConnStringKvBaseUrl: {
-        value: keyVaultUri
-      }
+      // airlockConnStringKvBaseUrl: {
+      //   value: keyVaultUri
+      // }
       privateContainerName: {
         value: privateContainerName
       }
@@ -193,9 +192,9 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
       privateFileShareName: {
         value: privateFileShareName
       }
-      privateConnStringKvBaseUrl: {
-        value: privateConnStringKvBaseUrl
-      }
+      // privateConnStringKvBaseUrl: {
+      //   value: privateConnStringKvBaseUrl
+      // }
       pipelineNameBlobToFileShare: {
         value: pipelineNames.blobToFileShare
       }
@@ -210,7 +209,7 @@ resource logicApp 'Microsoft.Logic/workflows@2019-05-01' = {
   tags: tags
 }
 
-// Set RBAC on ADF for Logic App
+// Set RBAC on ADF for Logic App so the Logic App can trigger ADF pipelines
 module logicAppAdfRbacModule '../../../module-library/roleAssignments/roleAssignment-adf.bicep' = {
   name: take(replace(deploymentNameStructure, '{rtype}', 'logic-rbac-adf'), 64)
   params: {
@@ -221,7 +220,7 @@ module logicAppAdfRbacModule '../../../module-library/roleAssignments/roleAssign
   }
 }
 
-// Set RBAC on project Storage Account for Logic App
+// Set RBAC on project Storage Account for Logic App so the Logic App can get a blob trigger
 module logicAppPrivateStRbacModule '../../../module-library/roleAssignments/roleAssignment-st.bicep' = {
   name: take(replace(deploymentNameStructure, '{rtype}', 'logic-rbac-st'), 64)
   params: {

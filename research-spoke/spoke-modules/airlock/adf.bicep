@@ -14,8 +14,8 @@ param privateDnsZonesResourceGroupId string
 
 param roles object
 
-param keyVaultName string
-param keyVaultResourceGroupName string
+// param keyVaultName string
+// param keyVaultResourceGroupName string
 
 param encryptionUserAssignedIdentityId string
 param encryptionKeyVaultUri string
@@ -39,17 +39,17 @@ var managedVnetName = 'default'
 var autoResolveIntegrationRuntimeName = 'AutoResolveIntegrationRuntime'
 var adlsGen2LinkedServiceName = 'ls_ADLSGen2_Generic'
 var azFilesLinkedServiceName = 'ls_AzFiles_Generic'
-var kvLinkedServiceName = 'ls_KeyVault'
+//var kvLinkedServiceName = 'ls_KeyVault'
 
 resource privateStorageAcct 'Microsoft.Storage/storageAccounts@2021-08-01' existing = {
   name: privateStorageAcctName
 }
 
 // The Key Vault where ADF can get the connection string for the Azure File Share linked service
-resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
-  name: keyVaultName
-  scope: resourceGroup(keyVaultResourceGroupName)
-}
+// resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+//   name: keyVaultName
+//   scope: resourceGroup(keyVaultResourceGroupName)
+// }
 
 resource adf 'Microsoft.DataFactory/factories@2018-06-01' = {
   name: replace(baseName, '{rtype}', 'adf')
@@ -58,6 +58,7 @@ resource adf 'Microsoft.DataFactory/factories@2018-06-01' = {
     type: 'SystemAssigned,UserAssigned'
     userAssignedIdentities: {
       '${encryptionUserAssignedIdentityId}': {}
+      //'${userAssignedIdentityId}': {}
     }
   }
   properties: {
@@ -183,37 +184,39 @@ resource integrationRuntime 'Microsoft.DataFactory/factories/integrationRuntimes
   }
 }
 
+// TODO: Grant ADF managed identity access to the project's File Share to read/write data
+
 // Grant ADF managed identity access to project/spoke Key Vault to retrieve secrets (#12)
-module adfPrjKvRoleAssignmentModule '../../../module-library/roleAssignments/roleAssignment-kv.bicep' = {
-  name: replace(deploymentNameStructure, '{rtype}', 'adf-role-prjkv')
-  scope: resourceGroup(keyVaultResourceGroupName)
-  params: {
-    kvName: keyVault.name
-    principalId: adf.identity.principalId
-    roleDefinitionId: roles.KeyVaultSecretsUser
-    principalType: 'ServicePrincipal'
-  }
-}
+// module adfPrjKvRoleAssignmentModule '../../../module-library/roleAssignments/roleAssignment-kv.bicep' = {
+//   name: replace(deploymentNameStructure, '{rtype}', 'adf-role-prjkv')
+//   scope: resourceGroup(keyVaultResourceGroupName)
+//   params: {
+//     kvName: keyVault.name
+//     principalId: adf.identity.principalId
+//     roleDefinitionId: roles.KeyVaultSecretsUser
+//     principalType: 'ServicePrincipal'
+//   }
+// }
 
 // Linked service for Key Vault, used by File Share linked service to get connection string
-resource keyVaultLinkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = {
-  name: kvLinkedServiceName
-  parent: adf
-  dependsOn: [
-    adfPrjKvRoleAssignmentModule
-  ]
-  properties: {
-    type: 'AzureKeyVault'
-    typeProperties: {
-      baseUrl: '@{linkedService().baseUrl}'
-    }
-    parameters: {
-      baseUrl: {
-        type: 'String'
-      }
-    }
-  }
-}
+// resource keyVaultLinkedService 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = {
+//   name: kvLinkedServiceName
+//   parent: adf
+//   dependsOn: [
+//     adfPrjKvRoleAssignmentModule
+//   ]
+//   properties: {
+//     type: 'AzureKeyVault'
+//     typeProperties: {
+//       baseUrl: '@{linkedService().baseUrl}'
+//     }
+//     parameters: {
+//       baseUrl: {
+//         type: 'String'
+//       }
+//     }
+//   }
+// }
 
 resource genericLinkedServiceAdlsGen2 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = {
   name: adlsGen2LinkedServiceName
@@ -238,35 +241,52 @@ resource genericLinkedServiceAdlsGen2 'Microsoft.DataFactory/factories/linkedser
   }
 }
 
+// var UamiCredentialName = 'UamiCredential'
+
+// resource UamiCredential 'Microsoft.DataFactory/factories/credentials@2018-06-01' = {
+//   name: UamiCredentialName
+//   parent: adf
+//   properties: {
+//     type: 'ManagedIdentity'
+//     typeProperties: {
+//       resourceId: userAssignedIdentityId
+//     }
+//   }
+// }
+
 resource genericLinkedServiceAzFiles 'Microsoft.DataFactory/factories/linkedservices@2018-06-01' = {
   name: azFilesLinkedServiceName
   parent: adf
   dependsOn: [
     integrationRuntime
-    adfPrjKvRoleAssignmentModule
-    keyVaultLinkedService
+    // TODO: Depend on Files role assignment
   ]
   properties: {
     type: 'AzureFileStorage'
     typeProperties: {
       fileShare: '@{linkedService().fileShareName}'
-      connectionString: {
-        type: 'AzureKeyVaultSecret'
-        store: {
-          referenceName: kvLinkedServiceName
-          type: 'LinkedServiceReference'
-          parameters: {
-            baseUrl: {
-              type: 'Expression'
-              value: '@linkedService().kvBaseUrl'
-            }
-          }
-        }
-        secretName: {
-          type: 'Expression'
-          value: '@{concat(linkedService().storageAccountName, \'-connstring1\')}'
-        }
-      }
+      // credential: {
+      //   type: 'CredentialReference'
+      //   referenceName: UamiCredentialName
+      // }
+      serviceEndpoint: '@{concat(\'https://\', linkedService().storageAccountName, \'.file.${environment().suffixes.storage}\')}'
+      // connectionString: {
+      //   // type: 'AzureKeyVaultSecret'
+      //   // store: {
+      //   //   referenceName: kvLinkedServiceName
+      //   //   type: 'LinkedServiceReference'
+      //   //   parameters: {
+      //   //     baseUrl: {
+      //   //       type: 'Expression'
+      //   //       value: '@linkedService().kvBaseUrl'
+      //   //     }
+      //   //   }
+      //   // }
+      //   // secretName: {
+      //   //   type: 'Expression'
+      //   //   value: '@{concat(linkedService().storageAccountName, \'-connstring1\')}'
+      //   // }
+      // }
     }
     parameters: {
       storageAccountName: {
@@ -497,19 +517,33 @@ resource pipelineFilesToFiles 'Microsoft.DataFactory/factories/pipelines@2018-06
 }
 
 // LATER: Abstract to storage-RoleAssignment module
-var storageAccountRoleDefinitionId = roles.StorageBlobDataContributor
+var storageAccountBlobRoleDefinitionId = roles.StorageBlobDataContributor
+var storageAccountFileRoleDefinitionId = roles.StorageFileDataPrivilegedContributor
 
 // Grant the ADF the Storage Blob Data Contributor role on the private storage account
-resource adfPrivateStgRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  // LATER: Fix name by combining object, subject, and role ID
+resource adfPrivateStgBlobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  // LATER: Fix name by combining object, subject, and role ID. This will be a breaking change for existing deployments
   name: guid('${privateStorageAcct.name}-${adf.name}-StorageBlobDataContributor')
   scope: privateStorageAcct
   properties: {
-    roleDefinitionId: storageAccountRoleDefinitionId
+    roleDefinitionId: storageAccountBlobRoleDefinitionId
     principalId: adf.identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
+
+// TODO: Grant the ADF the Storage File Data Privileged Contributor role on the private storage account
+// resource adfPrivateStgFileRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//   // LATER: Fix name by combining object, subject, and role ID
+//   // adf.id, principalId, roleDefinitionId
+//   name: guid(privateStorageAcct.id, adf.identity.principalId, storageAccountFileRoleDefinitionId)
+//   scope: privateStorageAcct
+//   properties: {
+//     roleDefinitionId: storageAccountFileRoleDefinitionId
+//     principalId: adf.identity.principalId
+//     principalType: 'ServicePrincipal'
+//   }
+// }
 
 output principalId string = adf.identity.principalId
 output name string = adf.name

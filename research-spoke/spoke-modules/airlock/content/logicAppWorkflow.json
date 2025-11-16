@@ -317,19 +317,11 @@
       "defaultValue": "",
       "type": "String"
     },
-    "airlockConnStringKvBaseUrl": {
-      "defaultValue": "",
-      "type": "String"
-    },
     "processNotificationEmail": {
       "defaultValue": "",
       "type": "String"
     },
     "privateFileShareName": {
-      "defaultValue": "",
-      "type": "String"
-    },
-    "privateConnStringKvBaseUrl": {
       "defaultValue": "",
       "type": "String"
     },

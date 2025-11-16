@@ -79,7 +79,7 @@ param subWorkloadName string = 'airlock'
 @allowed(['AADDS', 'AADKERB', 'None'])
 param filesIdentityType string
 
-@description('Role assignements to create on the storage account.')
+@description('Role assignments to create on the storage account.')
 param storageAccountRoleAssignments roleAssignmentType
 
 import { roleAssignmentType } from '../../../shared-modules/types/roleAssignment.bicep'
@@ -169,21 +169,21 @@ module spokeAirlockStorageAccountModule '../storage/main.bicep' = if (!useCentra
     roles: roles
 
     // The airlock storage uses file shares via ADF, so access keys are used
-    allowSharedKeyAccess: true
+    //allowSharedKeyAccess: true
   }
 }
 
 // Create a connection string secret for the airlock storage account
-module privateStorageConnStringSecretModule './../security/keyVault-StorageAccountConnString.bicep' = if (!useCentralizedReview) {
-  name: take(replace(deploymentNameStructure, '{rtype}', 'kv-secret'), 64)
-  scope: subscription()
-  params: {
-    keyVaultName: keyVaultName
-    keyVaultResourceGroupName: keyVaultResourceGroupName
-    storageAccountName: spokeAirlockStorageAccountModule.outputs.storageAccountName
-    storageAccountResourceGroupName: resourceGroup().name
-  }
-}
+// module privateStorageConnStringSecretModule './../security/keyVault-StorageAccountConnString.bicep' = if (!useCentralizedReview) {
+//   name: take(replace(deploymentNameStructure, '{rtype}', 'kv-secret'), 64)
+//   scope: subscription()
+//   params: {
+//     keyVaultName: keyVaultName
+//     keyVaultResourceGroupName: keyVaultResourceGroupName
+//     storageAccountName: spokeAirlockStorageAccountModule.outputs.storageAccountName
+//     storageAccountResourceGroupName: resourceGroup().name
+//   }
+// }
 
 /* Call the centralized module to
  * - Assign this UAMI a role to approve the airlock review storage account's private endpoint in the hub
@@ -238,8 +238,8 @@ module adfModule 'adf.bicep' = {
     debugMode: debugMode
 
     // Key Vault to retrieve connection strings
-    keyVaultName: keyVaultName
-    keyVaultResourceGroupName: keyVaultResourceGroupName
+    // keyVaultName: keyVaultName
+    // keyVaultResourceGroupName: keyVaultResourceGroupName
 
     adfEncryptionKeyName: adfEncryptionKeyName
     encryptionUserAssignedIdentityId: encryptionUamiId
@@ -252,12 +252,12 @@ module adfModule 'adf.bicep' = {
 }
 
 var airlockStorageAccountName = useCentralizedReview
-  ? centralizedModule.outputs.centralAirlockStorageAccountName
-  : spokeAirlockStorageAccountModule.outputs.storageAccountName
-var airlocKeyVaultUri = useCentralizedReview
-  ? centralizedModule.outputs.centralKeyVaultUri
-  : keyVault.properties.vaultUri
-var spokeKeyVaultUri = keyVault.properties.vaultUri
+  ? centralizedModule.?outputs.centralAirlockStorageAccountName
+  : spokeAirlockStorageAccountModule.?outputs.storageAccountName
+// var airlockKeyVaultUri = useCentralizedReview
+//   ? centralizedModule.?outputs.centralKeyVaultUri
+//   : keyVault.properties.vaultUri
+//var spokeKeyVaultUri = keyVault.properties.vaultUri
 
 // Logic app for export review (moves file to airlock review storage account and sends approval email)
 module logicAppModule 'logicApp.bicep' = {
@@ -268,7 +268,7 @@ module logicAppModule 'logicApp.bicep' = {
     location: location
     prjStorageAcctName: spokePrivateStorageAccountName
     airlockFileShareName: airlockFileShareName
-    airlockStorageAcctName: airlockStorageAccountName
+    airlockStorageAcctName: airlockStorageAccountName!
     adfName: adfModule.outputs.name
     approverEmail: approverEmail
     // Create a folder in the Airlock file share with the name of the private storage account,
@@ -276,7 +276,7 @@ module logicAppModule 'logicApp.bicep' = {
     airlockFolderPath: spokePrivateStorageAccountName
     sourceFolderPath: containerNames.exportRequest
     prjPublicStorageAcctName: publicStorageAccountModule.outputs.name
-    keyVaultUri: airlocKeyVaultUri
+    //keyVaultUri: airlockKeyVaultUri
     deploymentNameStructure: deploymentNameStructure
     roles: roles
     tags: tags
@@ -286,7 +286,7 @@ module logicAppModule 'logicApp.bicep' = {
       fileShareToBlob: adfModule.outputs.pipelineNames.fileShareToBlob
       fileShareToFileShare: adfModule.outputs.pipelineNames.fileShareToFileShare
     }
-    privateConnStringKvBaseUrl: spokeKeyVaultUri
+    //privateConnStringKvBaseUrl: spokeKeyVaultUri
     privateContainerName: containerNames.exportRequest
     privateFileShareName: spokePrivateFileShareName
     processNotificationEmail: processNotificationEmail
@@ -300,7 +300,8 @@ var publicStorageAccountContainerNames = [
 
 // Add storage with a public endpoint enabled for ingest and export
 module publicStorageAccountNameModule '../../../module-library/createValidAzResourceName.bicep' = {
-  name: take(replace(deploymentNameStructure, '{rtype}', 'pubsaname'), 64)
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'pubSaName'), 64)
   params: {
     location: location
     environment: environment
@@ -342,8 +343,6 @@ module publicStorageAccountModule '../storage/storageAccount.bicep' = {
     // No identity-based authentication here; there are no file shares
     filesIdentityType: 'None'
 
-    allowSharedKeyAccess: false
-
     storageAccountRoleAssignments: storageAccountRoleAssignments
   }
 }
@@ -351,6 +350,7 @@ module publicStorageAccountModule '../storage/storageAccount.bicep' = {
 // Grant researchers access to public export-approved and ingest containers
 module publicStContainerRbacModule '../../../module-library/roleAssignments/roleAssignment-st-container.bicep' = [
   for containerName in publicStorageAccountContainerNames: {
+    #disable-next-line BCP334
     name: take(replace(deploymentNameStructure, '{rtype}', 'st-pub-ct-${containerName}-rbac'), 64)
     params: {
       containerName: containerName
@@ -467,8 +467,8 @@ module airlockManagedPrivateEndpointModule 'adfManagedPrivateEndpoint.bicep' = {
     adfName: adfModule.outputs.name
     storageAccountId: useCentralizedReview
       ? centralAirlockResources.storageAccountId
-      : spokeAirlockStorageAccountModule.outputs.storageAccountId
-    storageAccountDisplayName: airlockStorageAccountName
+      : spokeAirlockStorageAccountModule.?outputs.storageAccountId
+    storageAccountDisplayName: airlockStorageAccountName!
     // The airlock storage account only has a file share
     privateEndpointGroupIDs: [
       'file'

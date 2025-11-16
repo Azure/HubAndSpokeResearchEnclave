@@ -536,8 +536,8 @@ module storageModule './spoke-modules/storage/main.bicep' = {
     uamiClientId: hubManagementVmUamiClientId
     roles: rolesModule.outputs.roles
 
-    // The private storage uses file shares via ADF, so access keys are used
-    allowSharedKeyAccess: true
+    // // The private storage uses file shares via ADF, so access keys are used
+    // allowSharedKeyAccess: true
 
     createPolicyExemptions: createPolicyExemptions
     policyAssignmentId: policyAssignmentId
@@ -638,17 +638,17 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
   }
 }
 
-// Store the file share connection string of the private storage account in Key Vault
-module privateStorageConnStringSecretModule './spoke-modules/security/keyVault-StorageAccountConnString.bicep' = {
-  name: take(replace(deploymentNameStructure, '{rtype}', 'kv-secret'), 64)
-  scope: subscription()
-  params: {
-    keyVaultName: keyVaultModule.outputs.keyVaultName
-    keyVaultResourceGroupName: securityRg.name
-    storageAccountName: storageModule.outputs.storageAccountName
-    storageAccountResourceGroupName: storageRg.name
-  }
-}
+// // Store the file share connection string of the private storage account in Key Vault
+// module privateStorageConnStringSecretModule './spoke-modules/security/keyVault-StorageAccountConnString.bicep' = {
+//   name: take(replace(deploymentNameStructure, '{rtype}', 'kv-secret'), 64)
+//   scope: subscription()
+//   params: {
+//     keyVaultName: keyVaultModule.outputs.keyVaultName
+//     keyVaultResourceGroupName: securityRg.name
+//     storageAccountName: storageModule.outputs.storageAccountName
+//     storageAccountResourceGroupName: storageRg.name
+//   }
+// }
 
 // Deploy the spoke airlock components
 // Depending on the value of isAirlockCentralized, the spoke will either use the hub's airlock review storage account and review VM or deploy its own
@@ -688,7 +688,7 @@ module airlockModule './spoke-modules/airlock/main.bicep' = {
     storageAccountEncryptionKeyName: useCMK ? 'storage' : ''
     adfEncryptionKeyName: useCMK ? 'adf' : ''
 
-    // Key Vault will store the file share's connection information and the encryption key, if needed
+    // Key Vault will access the storage account's encryption key, if needed
     keyVaultName: keyVaultModule.outputs.keyVaultName
     keyVaultResourceGroupName: securityRg.name
 
