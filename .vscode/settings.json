@@ -15,6 +15,7 @@
     "Entra",
     "Fqdns",
     "LDAPS",
+    "linkedservices",
     "loganalytics",
     "microsoftazure",
     "microsoftonline",
