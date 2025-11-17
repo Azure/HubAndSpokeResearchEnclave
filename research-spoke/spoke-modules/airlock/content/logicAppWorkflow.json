@@ -185,7 +185,6 @@
               "Message": {
                 "To": "@parameters('approverEmail')",
                 "Body": "A new request for export has been received.\n\nFile: @{parameters('airlockFolderPath')}/@{triggerBody()?['Name']}",
-                "From": "@parameters('fromEmail')",
                 "Importance": "Normal",
                 "HideHTMLMessage": false,
                 "ShowHTMLConfirmationDialog": false,
