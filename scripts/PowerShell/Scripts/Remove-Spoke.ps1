@@ -113,13 +113,13 @@ try {
         exit
     }
     
-    # If -WhatIf is used, output the number of resource groups found
-    if ($WhatIfPreference) {
+    # If -WhatIf or $Force are used, output the number of resource groups found
+    if ($WhatIfPreference -or $Force) {
         Write-Host $Msg1
     }
 
     if ($Force) {
-        Write-Verbose "Force switch specified. Proceeding with deletion of resources."
+        Write-Warning "Force switch specified. Proceeding with deletion of resources."
     }   
 
     ################################################################################
