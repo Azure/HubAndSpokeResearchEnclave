@@ -32,29 +32,33 @@ if ($NWversion -lt "4.15.0") {
 
 Select-AzSubscription $SubscriptionId -Tenant $Tenant | Out-Null
 $VaultToDelete = Get-AzRecoveryServicesVault -Name $VaultName -ResourceGroupName $ResourceGroup
+Write-Verbose "Selected Recovery Services Vault: $($VaultToDelete.Name) in Resource Group: $($VaultToDelete.ResourceGroupName)`n$($VaultToDelete.ID)"
 # Ignore WhatIfPreference here because future cmdlets will fail without this being set
 # This should have no side effects
-Set-AzRecoveryServicesAsrVaultContext -Vault $VaultToDelete -WhatIf:$false
+# Set-AzRecoveryServicesAsrVaultContext -Vault $VaultToDelete -WhatIf:$false
+#Set-AzRecoveryServicesVaultContext -Vault $VaultToDelete #-WhatIf:$false
 
 $UpdatedVault = Update-AzRecoveryServicesVault -ResourceGroupName $VaultToDelete.ResourceGroupName -Name $VaultToDelete.Name -ImmutabilityState "Disabled"
 Write-Host "Immutability state set to $($UpdatedVault.Properties.ImmutabilitySettings.ImmutabilityState)"
 
-Set-AzRecoveryServicesVaultProperty -Vault $VaultToDelete.ID -SoftDeleteFeatureState Disable #disable soft delete
-Write-Host "Soft delete disabled for the vault" $VaultName
-$containerSoftDelete = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureVM -WorkloadType AzureVM -VaultId $VaultToDelete.ID | Where-Object { $_.DeleteState -eq "ToBeDeleted" } #fetch backup items in soft delete state
-foreach ($softitem in $containerSoftDelete) {
-	Undo-AzRecoveryServicesBackupItemDeletion -Item $softitem -VaultId $VaultToDelete.ID -Force #undelete items in soft delete state
-}
+# HACK: 2025-11-16: svaelter: Can no longer disable soft delete in any region for a Recovery Services Vault.
+# Ref: https://learn.microsoft.com/azure/backup/secure-by-default?tabs=preview#supported-scenarios
+#Set-AzRecoveryServicesVaultProperty -Vault $VaultToDelete.ID -SoftDeleteFeatureState Disable #disable soft delete
+#Write-Host "Soft delete disabled for the vault" $VaultName
+# $containerSoftDelete = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureVM -WorkloadType AzureVM -VaultId $VaultToDelete.ID | Where-Object { $_.DeleteState -eq "ToBeDeleted" } #fetch backup items in soft delete state
+# foreach ($softitem in $containerSoftDelete) {
+# 	Undo-AzRecoveryServicesBackupItemDeletion -Item $softitem -VaultId $VaultToDelete.ID -Force #undelete items in soft delete state
+# }
 
-# Fetch MSSQL backup items in soft delete state
-$containerSoftDeleteSql = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureWorkload -WorkloadType MSSQL -VaultId $VaultToDelete.ID | Where-Object { $_.DeleteState -eq "ToBeDeleted" }
-foreach ($softitemsql in $containerSoftDeleteSql) {
-	Undo-AzRecoveryServicesBackupItemDeletion -Item $softitemsql -VaultId $VaultToDelete.ID -Force #undelete items in soft delete state
-}
+# # Fetch MSSQL backup items in soft delete state
+# $containerSoftDeleteSql = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureWorkload -WorkloadType MSSQL -VaultId $VaultToDelete.ID | Where-Object { $_.DeleteState -eq "ToBeDeleted" }
+# foreach ($softitemsql in $containerSoftDeleteSql) {
+# 	Undo-AzRecoveryServicesBackupItemDeletion -Item $softitemsql -VaultId $VaultToDelete.ID -Force #undelete items in soft delete state
+# }
 
 # Invoking API to disable Security features (Enhanced Security) to remove MARS/MAB/DPM servers.
-Set-AzRecoveryServicesVaultProperty -VaultId $VaultToDelete.ID -DisableHybridBackupSecurityFeature $true
-Write-Host "Disabled Security features for the vault"
+#Set-AzRecoveryServicesVaultProperty -VaultId $VaultToDelete.ID -DisableHybridBackupSecurityFeature $true
+#Write-Host "Disabled Security features for the vault"
 
 # Fetch all protected items and servers
 $backupItemsVM = Get-AzRecoveryServicesBackupItem -BackupManagementType AzureVM -WorkloadType AzureVM -VaultId $VaultToDelete.ID
