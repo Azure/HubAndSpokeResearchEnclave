@@ -39,7 +39,7 @@ resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' e
   scope: subscription()
 }
 
-resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' = {
+resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2025-08-01' = {
   name: vaultName
   location: location
   tags: tags
@@ -92,6 +92,7 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' = 
           }
           kekIdentity: {
             useSystemAssignedIdentity: true
+            // LATER: Use user-assigned identity if supported in commercial and Gov clouds
           }
           infrastructureEncryption: 'Enabled'
         }
