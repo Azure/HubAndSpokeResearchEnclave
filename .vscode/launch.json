@@ -1,0 +1,23 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "PowerShell: Launch Current File with parameters",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${file}",
+      "args": [
+        "-ResourceGroup",
+        "WVU-WVUSpoke-test-rg-backup-canadacentral-08",
+        "-VaultName",
+        "WVU-WVUSpoke-test-rsv-canadacentral-08",
+        "-SubscriptionId",
+        "cd561c08-4403-47b5-a0ff-880f793a8824",
+        "-Verbose"
+      ]
+    }
+  ]
+}
