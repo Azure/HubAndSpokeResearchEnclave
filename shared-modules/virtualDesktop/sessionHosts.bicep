@@ -34,7 +34,7 @@ param imageReference imageReferenceType = {
   publisher: 'microsoftwindowsdesktop'
   offer: 'office-365'
   version: 'latest'
-  sku: 'win11-23h2-avd-m365'
+  sku: 'win11-25h2-avd-m365'
 }
 
 @allowed(['ad', 'entraID'])
