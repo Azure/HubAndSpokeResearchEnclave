@@ -29,6 +29,9 @@ param pipelineNameFilesToFiles string = 'pipe-data_move-files_to_files'
 
 param debugMode bool
 
+@description('The names of additional storage accounts (beyond the private storage account) that the Data Factory is allowed to access via its pipelines. Used to configure outbound access control.')
+param allowedStorageAccountNames array = []
+
 import { pipelineNamesType } from '../../../shared-modules/types/pipelineNamesType.bicep'
 
 var baseName = !empty(subWorkloadName)
@@ -40,6 +43,20 @@ var autoResolveIntegrationRuntimeName = 'AutoResolveIntegrationRuntime'
 var adlsGen2LinkedServiceName = 'ls_ADLSGen2_Generic'
 var azFilesLinkedServiceName = 'ls_AzFiles_Generic'
 var kvLinkedServiceName = 'ls_KeyVault'
+
+// Outbound access control: compute the list of allowed domain names for the Azure Policy assignment
+var storageSuffix = environment().suffixes.storage
+var keyVaultSuffix = environment().suffixes.keyvaultDns
+// Combine the private storage account with any additional allowed storage accounts
+var allStorageAccountNames = union([privateStorageAcctName], allowedStorageAccountNames)
+// Generate blob, dfs, and file endpoints for each storage account
+var storageAllowedDomains = flatten(map(allStorageAccountNames, name => [
+  '${name}.blob.${storageSuffix}'
+  '${name}.dfs.${storageSuffix}'
+  '${name}.file.${storageSuffix}'
+]))
+// Include the Key Vault used by the Key Vault linked service to retrieve connection strings
+var allowedDomains = concat(storageAllowedDomains, ['${keyVaultName}${keyVaultSuffix}'])
 
 resource privateStorageAcct 'Microsoft.Storage/storageAccounts@2021-08-01' existing = {
   name: privateStorageAcctName
@@ -508,6 +525,25 @@ resource adfPrivateStgRole 'Microsoft.Authorization/roleAssignments@2022-04-01' 
     roleDefinitionId: storageAccountRoleDefinitionId
     principalId: adf.identity.principalId
     principalType: 'ServicePrincipal'
+  }
+}
+
+// Assign the built-in Azure Policy to restrict ADF outbound access to allowed domains only.
+// This prevents data exfiltration by blocking pipeline communication with unapproved destinations.
+// Policy: "[Preview]: Azure Data Factory pipelines should only communicate with allowed domains"
+resource adfOutboundPolicyAssignment 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
+  name: take(replace(baseName, '{rtype}', 'pa-adf-out'), 64)
+  scope: resourceGroup()
+  properties: {
+    policyDefinitionId: '/providers/Microsoft.Authorization/policyDefinitions/3d02a511-74e5-4dab-a5fd-878704d4a61a'
+    parameters: {
+      effect: {
+        value: 'Deny'
+      }
+      allowedDomainNames: {
+        value: allowedDomains
+      }
+    }
   }
 }
 
