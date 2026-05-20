@@ -9,13 +9,15 @@
       "type": "PowerShell",
       "request": "launch",
       "script": "${file}",
+      // NOTE: Replace the placeholder values below with your local Azure resource group,
+      // vault name, and subscription ID in your own environment.
       "args": [
         "-ResourceGroup",
-        "WVU-WVUSpoke-test-rg-backup-canadacentral-08",
+        "YOUR_RESOURCE_GROUP_NAME",
         "-VaultName",
-        "WVU-WVUSpoke-test-rsv-canadacentral-08",
+        "YOUR_VAULT_NAME",
         "-SubscriptionId",
-        "cd561c08-4403-47b5-a0ff-880f793a8824",
+        "YOUR_SUBSCRIPTION_ID",
         "-Verbose"
       ]
     }
