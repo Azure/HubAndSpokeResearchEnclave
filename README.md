@@ -8,11 +8,13 @@ To accelerate the deployment of a hub-and-spoke architecture for building secure
 
 ## Architecture
 
+![Hub-and-spoke research enclave architecture diagram](/docs/architecture/Research%20Enclave%20Hub%20and%20Spoke%20diagrams.png)
+
 [Visio Diagram](/docs/architecture/Research%20Enclave%20Hub%20and%20Spoke%20diagrams.vsdx)
 
 ## Features
 
-- Optional use of customer-managed keys for encryption at rest (required for FedRAMP Moderate compliance).
+- Optional use of customer-managed keys for encryption at rest (required for FedRAMP Moderate and other compliance).
 - Optional peering to a central hub.
 - Choice between Active Directory or Entra ID for device authentication and management. Optionally, use Intune for device management with Entra ID.
 
