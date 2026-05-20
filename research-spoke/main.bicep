@@ -635,7 +635,7 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     sessionHostLocalAdminUsername: sessionHostLocalAdminUsername
     sessionHostLocalAdminPassword: sessionHostLocalAdminPassword
     useCMK: useCMK
-    diskEncryptionSetId: diskEncryptionSetModule.?outputs.id
+    diskEncryptionSetId: useCMK ? diskEncryptionSetModule.?outputs.id! : ''
     sessionHostCount: sessionHostCount
 
     backupPolicyName: recoveryServicesVaultModule.outputs.vmBackupPolicyName
