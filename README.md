@@ -14,7 +14,7 @@ To accelerate the deployment of a hub-and-spoke architecture for building secure
 
 ## Features
 
-- Optional use of customer-managed keys for encryption at rest (required for FedRAMP Moderate and other compliance).
+- Optional use of customer-managed keys for encryption at rest (required for FedRAMP Moderate and similar compliance requirements).
 - Optional peering to a central hub.
 - Choice between Active Directory or Entra ID for device authentication and management. Optionally, use Intune for device management with Entra ID.
 
