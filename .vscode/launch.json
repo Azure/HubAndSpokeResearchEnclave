@@ -11,11 +11,11 @@
       "script": "${file}",
       // NOTE: Replace the placeholder values below with your local Azure resource group,
       // vault name, and subscription ID in your own environment.
-      "args": [
+        "<your-resource-group>",
         "-ResourceGroup",
-        "YOUR_RESOURCE_GROUP_NAME",
+        "<your-vault-name>",
         "-VaultName",
-        "YOUR_VAULT_NAME",
+        "<your-subscription-id>",
         "-SubscriptionId",
         "YOUR_SUBSCRIPTION_ID",
         "-Verbose"
