@@ -32,6 +32,10 @@ if ($NWversion -lt "4.15.0") {
 
 Select-AzSubscription $SubscriptionId -Tenant $Tenant | Out-Null
 $VaultToDelete = Get-AzRecoveryServicesVault -Name $VaultName -ResourceGroupName $ResourceGroup
+if ($null -eq $VaultToDelete) {
+	Write-Error "Recovery Services Vault '$VaultName' was not found in resource group '$ResourceGroup'."
+	return
+}
 Write-Verbose "Selected Recovery Services Vault: $($VaultToDelete.Name) in Resource Group: $($VaultToDelete.ResourceGroupName)`n$($VaultToDelete.ID)"
 # Ignore WhatIfPreference here because future cmdlets will fail without this being set
 # This should have no side effects
