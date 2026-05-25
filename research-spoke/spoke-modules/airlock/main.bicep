@@ -250,11 +250,25 @@ module adfModule 'adf.bicep' = {
     usePrivateEndpoint: usePrivateEndpoints
     privateEndpointSubnetId: usePrivateEndpoints ? privateEndpointSubnetId : ''
     privateDnsZonesResourceGroupId: usePrivateEndpoints ? privateDnsZonesResourceGroupId : ''
+
+    // Storage accounts the ADF is allowed to access (for outbound access control policy)
+    allowedStorageAccountNames: [
+      publicStorageAccountNameModule.outputs.validName
+      airlockStorageAccountNameForPolicy
+    ]
   }
 }
 
 var airlockStorageAccountName = useCentralizedReview
   ? centralizedModule.outputs.centralAirlockStorageAccountName
+  : spokeAirlockStorageAccountModule.outputs.storageAccountName
+
+// Derive the airlock storage account name without taking a dependency on centralizedModule
+// (which itself depends on adfModule, which would create a circular dependency).
+// For centralized review, extract the name from the resource ID parameter.
+// For non-centralized review, use the spoke airlock storage account module output.
+var airlockStorageAccountNameForPolicy = useCentralizedReview
+  ? last(split(centralAirlockResources.storageAccountId, '/'))
   : spokeAirlockStorageAccountModule.outputs.storageAccountName
 var airlocKeyVaultUri = useCentralizedReview
   ? centralizedModule.outputs.centralKeyVaultUri
