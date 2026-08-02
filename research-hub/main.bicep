@@ -131,6 +131,8 @@ param domainControllerIPAddresses array = []
 @description('The GUID of the Log Analytics Workspace where virtual machine logs will be sent. This will be used to create a firewall rule. If left empty, all Log Analytics Workspaces will be allowed.')
 param logAnalyticsWorkspaceId string = ''
 
+param deployImaging bool = true
+
 /*
  * Entra ID object IDs for role assignments
  */
@@ -499,7 +501,7 @@ var sampleImageTemplateImageReference = {
   version: 'latest'
 }
 
-module imagingModule 'hub-modules/imaging/main.bicep' = {
+module imagingModule 'hub-modules/imaging/main.bicep' = if (deployImaging) {
   scope: subscription(imageBuildSubscriptionId)
   name: take(replace(deploymentNameStructure, '{rtype}', 'imaging'), 64)
   params: {
@@ -554,7 +556,7 @@ module managementVmModule './hub-modules/management-vm/main.bicep' = if (logonTy
 
     logonType: logonType
 
-    diskEncryptionSetId: diskEncryptionSetModule.outputs.id
+    diskEncryptionSetId: diskEncryptionSetModule.?outputs.id!
   }
 }
 
@@ -568,11 +570,11 @@ output hubPrivateDnsZonesResourceGroupId string = empty(existingPrivateDnsZonesR
   ? networkRg.id
   : existingPrivateDnsZonesResourceGroupId
 
-output managementVmId string = logonType == 'ad' ? managementVmModule.outputs.vmId : 'N/A'
-output managementVmUamiPrincipalId string = logonType == 'ad' ? managementVmModule.outputs.uamiPrincipalId : 'N/A'
-output managementVmUamiClientId string = logonType == 'ad' ? managementVmModule.outputs.uamiClientId : 'N/A'
+output managementVmId string = logonType == 'ad' ? managementVmModule.?outputs.vmId! : 'N/A'
+output managementVmUamiPrincipalId string = logonType == 'ad' ? managementVmModule.?outputs.uamiPrincipalId! : 'N/A'
+output managementVmUamiClientId string = logonType == 'ad' ? managementVmModule.?outputs.uamiClientId! : 'N/A'
 
-output imageDefinitionId string = imagingModule.outputs.imageDefinitionId
+output imageDefinitionId string = deployImaging ? imagingModule.?outputs.imageDefinitionId! : 'N/A'
 
 // TODO: Output the resource ID of the remote application group for the remote desktop application
 // To be used in the spoke for setting permissions
