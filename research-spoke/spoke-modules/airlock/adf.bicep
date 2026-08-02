@@ -92,7 +92,7 @@ resource adf 'Microsoft.DataFactory/factories@2018-06-01' = {
     #disable-next-line BCP037
     globalConfigurations: {
       // Required to apply the outbound access control policy to this Data Factory instance
-      PolicyValidationEnabled: 'false'
+      PolicyValidationEnabled: 'true'
     }
   }
   tags: tags
