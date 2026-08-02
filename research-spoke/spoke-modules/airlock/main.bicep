@@ -230,6 +230,8 @@ module adfModule 'adf.bicep' = {
   params: {
     namingStructure: namingStructure
     subWorkloadName: subWorkloadName
+    workloadName: workloadName
+    sequence: sequence
     location: location
     deploymentNameStructure: deploymentNameStructure
     privateStorageAcctName: spokePrivateStorageAccountName

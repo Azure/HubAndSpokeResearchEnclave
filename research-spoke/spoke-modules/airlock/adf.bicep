@@ -4,6 +4,8 @@ param namingStructure string
 param tags object
 param deploymentNameStructure string
 param subWorkloadName string
+param workloadName string
+param sequence int
 param privateStorageAcctName string
 param userAssignedIdentityId string
 param userAssignedIdentityPrincipalId string
@@ -87,6 +89,11 @@ resource adf 'Microsoft.DataFactory/factories@2018-06-01' = {
     }
 
     publicNetworkAccess: usePrivateEndpoint ? 'Disabled' : 'Enabled'
+    #disable-next-line BCP037
+    globalConfigurations: {
+      // Required to apply the outbound access control policy to this Data Factory instance
+      PolicyValidationEnabled: 'false'
+    }
   }
   tags: tags
 }
@@ -535,6 +542,7 @@ resource adfOutboundPolicyAssignment 'Microsoft.Authorization/policyAssignments@
   name: take(replace(baseName, '{rtype}', 'pa-adf-out'), 64)
   scope: resourceGroup()
   properties: {
+    displayName: 'ADF Outbound Access Control - ${workloadName} ${format('{0:00}', sequence)}'
     policyDefinitionId: '/providers/Microsoft.Authorization/policyDefinitions/3d02a511-74e5-4dab-a5fd-878704d4a61a'
     parameters: {
       effect: {
