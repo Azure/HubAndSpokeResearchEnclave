@@ -69,7 +69,7 @@ param researchVmsAreSessionHosts bool = false
 @minValue(0)
 param jumpBoxSessionHostCount int = 1
 
-@description('The size of the jump box ession hosts to deploy in the research hub. Only used if researchVmsAreSessionHosts is true.')
+@description('The size of the jump box session hosts to deploy in the research hub. Only used if researchVmsAreSessionHosts is true.')
 param jumpBoxSessionHostVmSize string = 'Standard_D2as_v5'
 
 // Required if !researchVmsAreSessionHosts
@@ -130,8 +130,8 @@ param domainControllerIPAddresses array = []
 
 @description('The GUID of the Log Analytics Workspace where virtual machine logs will be sent. This will be used to create a firewall rule. If left empty, all Log Analytics Workspaces will be allowed.')
 param logAnalyticsWorkspaceId string = ''
-@description('If true, deploy OS image resources (Azure Image Builder / image definition) used by the environment.')
 
+@description('If true, deploy OS image resources (Azure Image Builder / image definition) used by the environment.')
 param deployImaging bool = true
 /*
  * Entra ID object IDs for role assignments
@@ -170,10 +170,6 @@ param debugMode bool = false
 // param debugPrincipalId string = ''
 
 //------------------------------- END PARAMETERS -------------------------------
-
-//-------------------------------- START TYPES ---------------------------------
-
-import { remoteAppApplicationGroup } from '../shared-modules/virtualDesktop/avd.bicep'
 
 //------------------------------- START VARIABLES ------------------------------
 
@@ -250,6 +246,7 @@ resource networkRg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
 
 module networkModule 'hub-modules/networking/main.bicep' = {
   scope: networkRg
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'networking'), 64)
   params: {
     deployAvdSubnet: !researchVmsAreSessionHosts
@@ -303,6 +300,7 @@ resource securityRg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
 
 module keyVaultNameModule '../module-library/createValidAzResourceName.bicep' = {
   scope: securityRg
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'kvname'), 64)
   params: {
     environment: environment
@@ -316,6 +314,7 @@ module keyVaultNameModule '../module-library/createValidAzResourceName.bicep' = 
 
 module keyVaultModule '../shared-modules/security/keyVault.bicep' = {
   scope: securityRg
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'kv'), 64)
   params: {
     location: location
@@ -328,6 +327,7 @@ module keyVaultModule '../shared-modules/security/keyVault.bicep' = {
 }
 
 module uamiModule '../shared-modules/security/uami.bicep' = {
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'uami'), 64)
   scope: securityRg
   params: {
@@ -339,6 +339,7 @@ module uamiModule '../shared-modules/security/uami.bicep' = {
 
 // LATER: Move RBAC to uamiModule
 module uamiKvRbacModule '../module-library/roleAssignments/roleAssignment-kv.bicep' = {
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'uami-kv-rbac'), 64)
   scope: securityRg
   params: {
@@ -351,6 +352,7 @@ module uamiKvRbacModule '../module-library/roleAssignments/roleAssignment-kv.bic
 
 // Create encryption keys in the Key Vault for data factory, storage accounts, disks, and recovery services vault
 module encryptionKeysModule '../shared-modules/security/encryptionKeys.bicep' = if (useCMK) {
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'keys'), 64)
   scope: securityRg
   params: {
@@ -360,13 +362,14 @@ module encryptionKeysModule '../shared-modules/security/encryptionKeys.bicep' = 
   }
 }
 
-var kvEncryptionKeys = reduce(encryptionKeysModule.outputs.keys, {}, (cur, next) => union(cur, next))
+var kvEncryptionKeys = useCMK ? reduce(encryptionKeysModule.?outputs.keys!, {}, (cur, next) => union(cur, next)) : {}
 
 // Determine if any VMs are being deployed in the hub
 var deployingVMs = (!researchVmsAreSessionHosts && jumpBoxSessionHostCount > 0) || isAirlockReviewCentralized
 
 // Create a Disk Encryption Set if we're deploying any VMs and we need to use CMK
 module diskEncryptionSetModule '../shared-modules/security/diskEncryptionSet.bicep' = if (deployingVMs && useCMK) {
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'des'), 64)
   scope: securityRg
   params: {
@@ -377,6 +380,7 @@ module diskEncryptionSetModule '../shared-modules/security/diskEncryptionSet.bic
     keyVaultId: keyVaultModule.outputs.id
     uamiId: uamiModule.outputs.id
     // TODO: Validate WithVersion is needed
+    #disable-next-line BCP187
     keyUrl: kvEncryptionKeys.diskEncryptionSet.keyUriWithVersion
     name: replace(resourceNamingStructureNoSub, '{rtype}', 'des')
     kvRoleDefinitionId: rolesModule.outputs.roles.KeyVaultCryptoServiceEncryptionUser
@@ -414,6 +418,7 @@ var wvdPrivateLinkDnsZoneId = resourceId(
 // Deploy Azure Virtual Desktop resources if AVD is used as jump hosts into the spokes
 module avdJumpBoxModule '../shared-modules/virtualDesktop/avd.bicep' = if (!researchVmsAreSessionHosts) {
   scope: avdRg
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'avd'), 64)
   params: {
     location: location
@@ -446,20 +451,21 @@ var vmNamePrefix = empty(customSessionHostNamePrefix)
 
 module avdJumpBoxSessionHostModule '../shared-modules/virtualDesktop/sessionHosts.bicep' = if (!researchVmsAreSessionHosts && jumpBoxSessionHostCount > 0) {
   scope: avdRg
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'avd-sh'), 64)
   params: {
     location: location
     deploymentNameStructure: deploymentNameStructure
     tags: actualTags
 
-    diskEncryptionSetId: diskEncryptionSetModule.outputs.id
+    diskEncryptionSetId: diskEncryptionSetModule.?outputs.id ?? ''
 
     // TODO: Specify if required to backup
     backupPolicyName: ''
     recoveryServicesVaultId: ''
 
-    hostPoolName: avdJumpBoxModule.outputs.hostPoolName
-    hostPoolToken: avdJumpBoxModule.outputs.hostPoolRegistrationToken
+    hostPoolName: avdJumpBoxModule.?outputs.hostPoolName!
+    hostPoolToken: avdJumpBoxModule.?outputs.hostPoolRegistrationToken!
     logonType: logonType
     namingStructure: replace(resourceNamingStructure, '{subWorkloadName}', 'avd')
 
@@ -503,6 +509,7 @@ var sampleImageTemplateImageReference = {
 
 module imagingModule 'hub-modules/imaging/main.bicep' = if (deployImaging) {
   scope: subscription(imageBuildSubscriptionId)
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'imaging'), 64)
   params: {
     location: location
@@ -529,6 +536,7 @@ resource managementRg 'Microsoft.Resources/resourceGroups@2022-09-01' = if (logo
 }
 
 module managementVmModule './hub-modules/management-vm/main.bicep' = if (logonType == 'ad') {
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'vm-mgmt'), 64)
   scope: managementRg
   params: {
@@ -555,12 +563,12 @@ module managementVmModule './hub-modules/management-vm/main.bicep' = if (logonTy
       : null
 
     logonType: logonType
-    diskEncryptionSetId: diskEncryptionSetModule.?outputs.id ?? ''
-    diskEncryptionSetId: diskEncryptionSetModule.?outputs.id!
+    diskEncryptionSetId: diskEncryptionSetModule.?outputs.id ?? ''
   }
 }
 
 module rolesModule '../module-library/roles.bicep' = {
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'roles'), 64)
 }
 
