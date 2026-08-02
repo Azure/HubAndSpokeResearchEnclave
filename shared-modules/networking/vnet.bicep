@@ -1,6 +1,6 @@
 param location string
 param vnetName string
-@description('The custom oject definition for the subnets. The key is the name of the subnet. The value is an object containing the properties for the subnet. { subnet-name: { addressPrefix: subnet-address-prefix, ... }, ... }')
+@description('The custom object definition for the subnets. The key is the name of the subnet. The value is an object containing the properties for the subnet. { subnet-name: { addressPrefix: subnet-address-prefix, natGateway: { id: nat-gateway-resource-id }, ... }, ... }')
 param subnetDefs object
 @minLength(1)
 param vnetAddressPrefixes array
@@ -53,6 +53,7 @@ var subnetArmDefs = [
       privateLinkServiceNetworkPolicies: contains(subnet.value, 'privateLinkServiceNetworkPolicies') && !empty(subnet.value.privateLinkServiceNetworkPolicies)
         ? subnet.value.privateLinkServiceNetworkPolicies
         : null
+      natGateway: contains(subnet.value, 'natGateway') && !empty(subnet.value.natGateway) ? subnet.value.natGateway : null
     }
   }
 ]
