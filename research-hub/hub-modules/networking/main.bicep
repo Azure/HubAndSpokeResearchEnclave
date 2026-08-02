@@ -109,7 +109,7 @@ module firewallNatGatewayModule 'br/public:avm/res/network/nat-gateway:2.1.0' = 
     natGatewaySku: 'StandardV2'
     publicIPAddresses: [
       {
-        name: replace(resourceNamingStructure, '{rtype}', 'pip-fw-nat')
+        name: replace(resourceNamingStructure, '{rtype}', 'pip-ng-fw')
         skuName: 'StandardV2'
       }
     ]
