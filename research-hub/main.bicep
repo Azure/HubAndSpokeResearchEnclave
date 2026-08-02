@@ -130,9 +130,8 @@ param domainControllerIPAddresses array = []
 
 @description('The GUID of the Log Analytics Workspace where virtual machine logs will be sent. This will be used to create a firewall rule. If left empty, all Log Analytics Workspaces will be allowed.')
 param logAnalyticsWorkspaceId string = ''
-
+@description('If true, deploy OS image resources (Azure Image Builder / image definition) used by the environment.')
 param deployImaging bool = true
-
 /*
  * Entra ID object IDs for role assignments
  */
