@@ -76,7 +76,7 @@ $StorageAccounts = Get-AzRecoveryServicesBackupContainer -ContainerType AzureSto
 $backupServersMARS = Get-AzRecoveryServicesBackupContainer -ContainerType "Windows" -BackupManagementType MAB -VaultId $VaultToDelete.ID
 $backupServersMABS = Get-AzRecoveryServicesBackupManagementServer -VaultId $VaultToDelete.ID | Where-Object { $_.BackupManagementType -eq "AzureBackupServer" }
 $backupServersDPM = Get-AzRecoveryServicesBackupManagementServer -VaultId $VaultToDelete.ID | Where-Object { $_.BackupManagementType -eq "SCDPM" }
-$pvtendpoints = Get-AzPrivateEndpointConnection -PrivateLinkResourceId $VaultToDelete.ID
+$pvtEndpoints = Get-AzPrivateEndpointConnection -PrivateLinkResourceId $VaultToDelete.ID
 
 foreach ($item in $backupItemsVM) {
 	Disable-AzRecoveryServicesBackupProtection -Item $item -VaultId $VaultToDelete.ID -RemoveRecoveryPoints -Force #stop backup and delete Azure VM backup items
@@ -238,7 +238,7 @@ $pvtEndpointsFin = Get-AzPrivateEndpointConnection -PrivateLinkResourceId $Vault
 # if ($ASRProtectedItems -ne 0) { Write-Host $ASRProtectedItems "ASR protected items are still present in the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
 # if ($ASRPolicyMappings -ne 0) { Write-Host $ASRPolicyMappings "ASR policy mappings are still present in the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
 # if ($fabricCount -ne 0) { Write-Host $fabricCount "ASR Fabrics are still present in the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
-if ($pvtendpointsFin.count -ne 0) { Write-Host $pvtendpointsFin.count "Private endpoints are still linked to the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
+if ($pvtEndpointsFin.count -ne 0) { Write-Host $pvtEndpointsFin.count "Private endpoints are still linked to the vault. Remove the same for successful vault deletion." -ForegroundColor Red }
 
 if ($PSCmdlet.ShouldProcess($VaultName, "DELETE")) {
 	$RestMethodParameters = @{
@@ -278,18 +278,13 @@ if ($PSCmdlet.ShouldProcess($VaultName, "DELETE")) {
 
 			# Derive AzRestMethod path from full URL; need to remove 'https://management.azure.com' prefix but not the `/`
 			# https://learn.microsoft.com/powershell/module/az.accounts/invoke-azrestmethod?view=azps-15.1.0#-path
-			$AzRestMethodPath = $OperationUrl -replace "^$((Get-AzContext).Environment.ResourceManagerUrl)", "/"
+			[string]$RegexEscapedResourceManagerUrl = [Regex]::Escape((Get-AzContext).Environment.ResourceManagerUrl)
+			$AzRestMethodPath = $OperationUrl -replace "^$RegexEscapedResourceManagerUrl", "/"
 			Write-Verbose "Derived AzRestMethod path: '$AzRestMethodPath'"
 		}
 
 		# Polling parameters
-		# [int]$PollIntervalSec = 0     # base interval
-		# if ($headers.Contains("Retry-After")) {
-		[int]$PollIntervalSec = [int]${headers.GetValues("Retry-After")}?[0] ?? 20
-		# }
-		# else {
-		# 	$PollIntervalSec = 20
-		# }
+		[int]$PollIntervalSec = [int]($headers.GetValues("Retry-After")?[0]) ?? 20
 
 		[int]$MaxWaitMinutes = 10      # overall timeout budget
 		$Deadline = (Get-Date).AddMinutes($MaxWaitMinutes)
