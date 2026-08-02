@@ -16,8 +16,9 @@ param location string
     securityRules: array (optional; if ommitted, no NSG will be created. If [], a default NSG will be created.)
     routes: array (optional; if ommitted, no route table will be created. If [], an empty route table will be created.)
     delegation: string (optional, can be ommitted or be empty string)
+    natGateway: object (optional; an ARM resource reference containing the NAT Gateway resource ID)
   } */
-@description('A custom object defining the subnet properties of each subnet. { subnet-name: { addressPrefix: string, serviceEndpoints: [], securityRules: [], routes: [], delegation: string } }')
+@description('A custom object defining the subnet properties of each subnet. { subnet-name: { addressPrefix: string, serviceEndpoints: [], securityRules: [], routes: [], delegation: string, natGateway: { id: string } } }')
 param subnetDefs object
 @description('The definition of additional subnets that have been manually created. Uses the ARM schema for subnets.')
 param additionalSubnets array = []
