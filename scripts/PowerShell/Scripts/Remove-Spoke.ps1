@@ -236,7 +236,19 @@ try {
 catch {
     Write-Host "`n❌ An error occurred: $($_)"
     Write-Host $_.ScriptStackTrace
-    Write-Host "In subscription: $($AzContext.Subscription.Id) - $($AzContext.Subscription.Name)"
+
+    $ContextForError = $AzContext
+    if (-not $ContextForError) {
+        $ContextForError = Get-AzContext -ErrorAction SilentlyContinue
+    }
+
+    if ($ContextForError -and $ContextForError.Subscription) {
+        Write-Host "In subscription: $($ContextForError.Subscription.Id) - $($ContextForError.Subscription.Name)"
+    }
+    else {
+        Write-Host "In subscription: unavailable"
+    }
+
     exit 1
 }
 finally {
