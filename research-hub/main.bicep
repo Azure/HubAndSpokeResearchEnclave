@@ -365,7 +365,7 @@ module encryptionKeysModule '../shared-modules/security/encryptionKeys.bicep' = 
 var kvEncryptionKeys = useCMK ? reduce(encryptionKeysModule.?outputs.keys!, {}, (cur, next) => union(cur, next)) : {}
 
 // Determine if any VMs are being deployed in the hub
-var deployingVMs = (!researchVmsAreSessionHosts && jumpBoxSessionHostCount > 0) || isAirlockReviewCentralized
+var deployingVMs = (!researchVmsAreSessionHosts && jumpBoxSessionHostCount > 0) || isAirlockReviewCentralized || (logonType == 'ad')
 
 // Create a Disk Encryption Set if we're deploying any VMs and we need to use CMK
 module diskEncryptionSetModule '../shared-modules/security/diskEncryptionSet.bicep' = if (deployingVMs && useCMK) {
