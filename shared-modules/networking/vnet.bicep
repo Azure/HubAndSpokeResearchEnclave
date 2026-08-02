@@ -53,7 +53,7 @@ var subnetArmDefs = [
       privateLinkServiceNetworkPolicies: contains(subnet.value, 'privateLinkServiceNetworkPolicies') && !empty(subnet.value.privateLinkServiceNetworkPolicies)
         ? subnet.value.privateLinkServiceNetworkPolicies
         : null
-      natGateway: contains(subnet.value, 'natGateway') ? subnet.value.natGateway : null
+      natGateway: contains(subnet.value, 'natGateway') && !empty(subnet.value.natGateway) ? subnet.value.natGateway : null
     }
   }
 ]
