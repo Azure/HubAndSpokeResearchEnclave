@@ -60,7 +60,7 @@ var subnetArmDefs = [
 // Combine all subnet sources and ensure every subnet is deployed without default outbound access
 var allSubnets = [
   for subnet in union(additionalSubnets, subnetArmDefs): union(subnet, {
-    properties: union(subnet.properties, {
+    properties: union(subnet.?properties ?? {}, {
       defaultOutboundAccess: false
     })
   })
