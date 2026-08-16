@@ -4,6 +4,7 @@ type activeDirectoryDomainInfo = {
   domainJoinPassword: string
   @secure()
   domainJoinUsername: string
+
   adDomainFqdn: string
   adOuPath: string?
 }
