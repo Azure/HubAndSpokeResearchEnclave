@@ -74,8 +74,8 @@ module avdModule 'avd.bicep' = {
 
     useSessionHostConfiguration: useSessionHostConfiguration
     sessionHostSize: sessionHostSize
-    adDomainFqdn: adDomainJoinInfo.?adDomainFqdn ?? ''
-    adOuPath: adDomainJoinInfo.?adOuPath ?? ''
+    adDomainFqdn: adDomainJoinInfo.?adDomainFqdn
+    adOuPath: adDomainJoinInfo.?adOuPath
     domainJoinCredentialKeyVaultSecretUris: domainJoinCredentialKeyVaultSecretUris
     localCredentialKeyVaultSecretUris: localCredentialKeyVaultSecretUris
     subnetId: computeSubnetId
