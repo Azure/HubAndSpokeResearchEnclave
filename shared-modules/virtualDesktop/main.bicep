@@ -40,6 +40,10 @@ param roles object
 param location string
 param tags object
 
+param enableAvmTelemetry bool
+
+param sessionHostResourceGroupName string
+
 // Session Host configuration only
 param domainJoinCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
 param localCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
@@ -49,6 +53,12 @@ import { activeDirectoryDomainInfo } from '../types/activeDirectoryDomainInfo.bi
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
   name: resourceGroupName
+  location: location
+  tags: tags
+}
+
+resource sessionHostResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = if (resourceGroupName != sessionHostResourceGroupName) {
+  name: sessionHostResourceGroupName
   location: location
   tags: tags
 }
@@ -80,6 +90,10 @@ module avdModule 'avd.bicep' = {
     localCredentialKeyVaultSecretUris: localCredentialKeyVaultSecretUris
     subnetId: computeSubnetId
     vmNamePrefix: sessionHostNamePrefix
+
+    sessionHostResourceGroupName: sessionHostResourceGroup.name // Creates an implicit dependency
+
+    enableAvmTelemetry: enableAvmTelemetry
   }
 }
 
@@ -97,7 +111,7 @@ module sessionHostModule 'sessionHosts.bicep' = if (sessionHostCount > 0) {
     diskEncryptionSetId: useCMK ? diskEncryptionSetId : ''
 
     hostPoolName: avdModule.outputs.hostPoolName
-    hostPoolToken: avdModule.outputs.hostPoolRegistrationToken
+    hostPoolToken: avdModule.outputs.?hostPoolRegistrationToken
 
     vmLocalAdminPassword: sessionHostLocalAdminPassword
     vmLocalAdminUsername: sessionHostLocalAdminUsername

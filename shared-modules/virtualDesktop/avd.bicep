@@ -42,12 +42,17 @@ param imageReference imageReferenceType = {
   publisher: 'microsoftwindowsdesktop'
   offer: 'office-365'
   sku: 'win11-25h2-avd-m365'
-  version: 'latest'
+  // Version must be explicit for Session Host Configuration
+  // 'latest' is not supported
+  version: '26200.9168.260811'
 }
 param subnetId string?
 param domainJoinCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
 param localCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
+@maxLength(9)
 param vmNamePrefix string?
+
+param enableAvmTelemetry bool
 
 /*
  * TYPES
@@ -102,6 +107,11 @@ var entraIDJoinCustomRdpProperties = (logonType == 'entraID')
 var customRdpProperty = '${defaultRdpProperties}${entraIDJoinCustomRdpProperties}'
 var intuneMdmId = '0000000a-0000-0000-c000-000000000000'
 
+var splitSubnetId = split(subnetId!, '/')
+var virtualNetworkResourceId = subnetId != null
+  ? resourceId(splitSubnetId[4], 'Microsoft.Network/virtualNetworks', splitSubnetId[8])
+  : null
+
 /*
  * RESOURCES
  */
@@ -114,13 +124,17 @@ resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2026-04-01-preview'
     loadBalancerType: 'BreadthFirst'
     preferredAppGroupType: deployDesktopAppGroup ? 'Desktop' : 'RailApplications'
     customRdpProperty: customRdpProperty
-    registrationInfo: {
-      registrationTokenOperation: 'Update'
-      expirationTime: dateTimeAdd(deploymentTime, 'PT5H')
-    }
+    registrationInfo: !useSessionHostConfiguration
+      ? {
+          registrationTokenOperation: 'Update'
+          expirationTime: dateTimeAdd(deploymentTime, 'PT5H')
+        }
+      : null
     maxSessionLimit: 25 // TODO: Make this configurable via parameter
 
     publicNetworkAccess: usePrivateLinkForHostPool ? 'EnabledForClientsOnly' : 'Enabled'
+
+    managementType: useSessionHostConfiguration ? 'Automated' : 'Standard'
 
     // LATER: Add Start VM On Connect configuration (role config!)
   }
@@ -132,16 +146,156 @@ resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2026-04-01-preview'
   tags: tags
 }
 
-// TODO: Create role assignments for the managed identity
+// TODO: Create role assignments for the managed identity of the host pool (?)
 // - Desktop Virtualization Virtual Machine Contributor role
 //   - Resource group for the session hosts
+module resourceGroupRbacModule '../../module-library/roleAssignments/roleAssignment-rg.bicep' = if (useSessionHostConfiguration) {
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'hp-rbac-rg'), 64)
+  scope: resourceGroup(sessionHostResourceGroupName)
+  params: {
+    principalId: hostPool.identity.principalId
+    roleDefinitionId: roles.DesktopVirtualizationVirtualMachineContributor
+    principalType: 'ServicePrincipal'
+    description: 'Role assignment for the managed identity of the host pool to manage (create, delete) session hosts.'
+  }
+}
+
 //   - Host pool itself (could be different from session host RG)
+module hostPoolRbacModule 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = if (useSessionHostConfiguration) {
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'hp-rbac-hp'), 64)
+  params: {
+    principalId: hostPool.identity.principalId
+    roleDefinitionId: roles.DesktopVirtualizationVirtualMachineContributor
+    principalType: 'ServicePrincipal'
+    description: 'Role assignment for the managed identity of the host pool.'
+    resourceId: hostPool.id
+    enableTelemetry: enableAvmTelemetry
+  }
+}
 //   - Virtual network
-//   - Subnet (is that necessary? Portal does it)
+module vnetRbacModule 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = if (useSessionHostConfiguration && !empty(virtualNetworkResourceId)) {
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'hp-rbac-vnet'), 64)
+  scope: resourceGroup(split(virtualNetworkResourceId!, '/')[4])
+  params: {
+    principalId: hostPool.identity.principalId
+    roleDefinitionId: roles.DesktopVirtualizationVirtualMachineContributor
+    principalType: 'ServicePrincipal'
+    description: 'Role assignment for the managed identity of the host pool.'
+    resourceId: virtualNetworkResourceId!
+    enableTelemetry: enableAvmTelemetry
+  }
+}
+// LATER: - Subnet (is that necessary? Portal does it)
 // - Key Vault Secrets User
 //   - Secrets for
 //     - Domain join username, password
+resource domainJoinCredentialKeyVault 'Microsoft.KeyVault/vaults@2026-02-01' existing = if (useSessionHostConfiguration && domainJoinCredentialKeyVaultSecretUris != null) {
+  name: domainJoinCredentialKeyVaultSecretUris!.keyVaultName
+  scope: resourceGroup(
+    domainJoinCredentialKeyVaultSecretUris!.keyVaultSubscriptionId,
+    domainJoinCredentialKeyVaultSecretUris!.keyVaultResourceGroupName
+  )
+}
+
+resource domainJoinUsernameSecret 'Microsoft.KeyVault/vaults/secrets@2026-02-01' existing = if (useSessionHostConfiguration && domainJoinCredentialKeyVaultSecretUris != null) {
+  name: split(domainJoinCredentialKeyVaultSecretUris!.username, '/')[4]
+  parent: domainJoinCredentialKeyVault
+}
+
+resource domainJoinPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2026-02-01' existing = if (useSessionHostConfiguration && domainJoinCredentialKeyVaultSecretUris != null) {
+  name: split(domainJoinCredentialKeyVaultSecretUris!.password, '/')[4]
+  parent: domainJoinCredentialKeyVault
+}
+
+module domainJoinUsernameSecretRbacModule 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = if (useSessionHostConfiguration && domainJoinCredentialKeyVaultSecretUris != null) {
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'hp-rbac-djuname'), 64)
+  scope: resourceGroup(
+    domainJoinCredentialKeyVaultSecretUris!.keyVaultSubscriptionId,
+    domainJoinCredentialKeyVaultSecretUris!.keyVaultResourceGroupName
+  )
+  params: {
+    principalId: hostPool.identity.principalId
+    roleDefinitionId: roles.KeyVaultSecretsUser
+    principalType: 'ServicePrincipal'
+    description: 'Role assignment for the managed identity of the host pool to access the domain join username secret.'
+    resourceId: domainJoinUsernameSecret.id
+    enableTelemetry: enableAvmTelemetry
+  }
+}
+
+module domainJoinPasswordSecretRbacModule 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = if (useSessionHostConfiguration && domainJoinCredentialKeyVaultSecretUris != null) {
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'hp-rbac-djpass'), 64)
+  scope: resourceGroup(
+    domainJoinCredentialKeyVaultSecretUris!.keyVaultSubscriptionId,
+    domainJoinCredentialKeyVaultSecretUris!.keyVaultResourceGroupName
+  )
+  params: {
+    principalId: hostPool.identity.principalId
+    roleDefinitionId: roles.KeyVaultSecretsUser
+    principalType: 'ServicePrincipal'
+    description: 'Role assignment for the managed identity of the host pool to access the domain join password secret.'
+    resourceId: domainJoinPasswordSecret.id
+    enableTelemetry: enableAvmTelemetry
+  }
+}
+
 //     - Session host local admin username, password
+resource localCredentialKeyVault 'Microsoft.KeyVault/vaults@2026-02-01' existing = if (useSessionHostConfiguration && localCredentialKeyVaultSecretUris != null) {
+  name: localCredentialKeyVaultSecretUris!.keyVaultName
+  scope: resourceGroup(
+    localCredentialKeyVaultSecretUris!.keyVaultSubscriptionId,
+    localCredentialKeyVaultSecretUris!.keyVaultResourceGroupName
+  )
+}
+resource localUsernameSecret 'Microsoft.KeyVault/vaults/secrets@2026-02-01' existing = if (useSessionHostConfiguration && localCredentialKeyVaultSecretUris != null) {
+  name: split(localCredentialKeyVaultSecretUris!.username, '/')[4]
+  parent: localCredentialKeyVault
+}
+
+resource localPasswordSecret 'Microsoft.KeyVault/vaults/secrets@2026-02-01' existing = if (useSessionHostConfiguration && localCredentialKeyVaultSecretUris != null) {
+  name: split(localCredentialKeyVaultSecretUris!.password, '/')[4]
+  parent: localCredentialKeyVault
+}
+
+module usernameSecretRbacModule 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = if (useSessionHostConfiguration && localCredentialKeyVaultSecretUris != null) {
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'hp-rbac-uname'), 64)
+  scope: resourceGroup(
+    localCredentialKeyVaultSecretUris!.keyVaultSubscriptionId,
+    localCredentialKeyVaultSecretUris!.keyVaultResourceGroupName
+  )
+  params: {
+    principalId: hostPool.identity.principalId
+    roleDefinitionId: roles.KeyVaultSecretsUser
+    principalType: 'ServicePrincipal'
+    description: 'Role assignment for the managed identity of the host pool to access the session host local admin username secret.'
+    resourceId: localUsernameSecret.id
+    enableTelemetry: enableAvmTelemetry
+  }
+}
+
+module passwordSecretRbacModule 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = if (useSessionHostConfiguration && localCredentialKeyVaultSecretUris != null) {
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'hp-rbac-pass'), 64)
+  scope: resourceGroup(
+    localCredentialKeyVaultSecretUris!.keyVaultSubscriptionId,
+    localCredentialKeyVaultSecretUris!.keyVaultResourceGroupName
+  )
+  params: {
+    principalId: hostPool.identity.principalId
+    roleDefinitionId: roles.KeyVaultSecretsUser
+    principalType: 'ServicePrincipal'
+    description: 'Role assignment for the managed identity of the host pool to access the session host local admin password secret.'
+    resourceId: localPasswordSecret.id
+    enableTelemetry: enableAvmTelemetry
+  }
+}
+
 // LATER: Create additional role assignments for the managed identity
 // - Desktop Virtualization Virtual Machine Contributor role
 //   - Custom image resource group - which resource groups(s) are they in?
@@ -209,6 +363,16 @@ resource sessionHostConfiguration 'Microsoft.DesktopVirtualization/hostPools/ses
     vmSizeId: sessionHostSize
     vmNamePrefix: vmNamePrefix!
   }
+  // Requires explicit dependencies on the role assignments
+  dependsOn: [
+    resourceGroupRbacModule
+    hostPoolRbacModule
+    vnetRbacModule
+    domainJoinUsernameSecretRbacModule
+    domainJoinPasswordSecretRbacModule
+    usernameSecretRbacModule
+    passwordSecretRbacModule
+  ]
 }
 
 resource desktopApplicationGroup 'Microsoft.DesktopVirtualization/applicationGroups@2026-04-01-preview' = if (deployDesktopAppGroup) {
@@ -349,5 +513,10 @@ resource privateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZ
   }
 }
 
-output hostPoolRegistrationToken string = hostPool.properties.registrationInfo.token
+output hostPoolRegistrationToken string? = !useSessionHostConfiguration
+  ? hostPool.properties.registrationInfo.token
+  : null
 output hostPoolName string = hostPool.name
+output sessionHostConfigurationVersion string? = useSessionHostConfiguration
+  ? sessionHostConfiguration!.properties.version
+  : null

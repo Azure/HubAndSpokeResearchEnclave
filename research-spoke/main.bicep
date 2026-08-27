@@ -114,6 +114,10 @@ param avdUseSessionHostConfiguration bool = false
 param domainJoinCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
 @description('The Key Vault Secret URIs of a username and password secret used for the local administrator account on the session hosts. REQUIRED when using Session Host Configuration for AVD.')
 param localCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
+@description('If true, will use a resource group for session host deploy that is different from the resource group for the AVD infrastructure resources. Recommended when using Session Host Configuration.')
+param useSeparateResourceGroupForSessionHosts bool = false
+@description('The name of the resource group to use for the AVD session hosts.')
+param sessionHostResourceGroupName string?
 
 // Airlock parameters
 @description('If true, airlock reviews will take place centralized in the hub. If true, the hub* parameters must be specified also.')
@@ -230,6 +234,9 @@ param debugMode bool = false
 param debugRemoteIp string = ''
 @description('The object ID of the user or group to assign permissions. Only used when `debugMode = true`.')
 param debugPrincipalId string = az.deployer().objectId
+
+@description('If true, will enable sending telemetry for Azure Verified Modules.')
+param enableAvmTelemetry bool = true
 
 //----------------------------- END PARAMETERS -----------------------------
 
@@ -450,7 +457,7 @@ module encryptionKeysModule '../shared-modules/security/encryptionKeys.bicep' = 
   }
 }
 
-var kvEncryptionKeys = useCMK ? reduce(encryptionKeysModule.outputs.keys, {}, (cur, next) => union(cur, next)) : null
+var kvEncryptionKeys = useCMK ? reduce(encryptionKeysModule.?outputs.keys!, {}, (cur, next) => union(cur, next)) : null
 
 module uamiModule '../shared-modules/security/uami.bicep' = {
   #disable-next-line BCP334
@@ -607,17 +614,23 @@ module privateStFileShareRbacModule '../module-library/roleAssignments/roleAssig
 // Construct the session hosts' VM name prefix using the pattern "SH-{workloadName}-{sequence}",
 // taking into account that the max length of the vmNamePrefix is 11 characters
 var vmNamePrefixLead = 'sh-'
-var vmNamePrefixWorkloadName = take(workloadName, 11 - length(string(sequence)) - length('sh-'))
+var maxVmNamePrefixLength = avdUseSessionHostConfiguration ? 9 : 11
+var vmNamePrefixWorkloadName = take(workloadName, maxVmNamePrefixLength - length(string(sequence)) - length('sh-'))
 var vmNamePrefix = empty(customSessionHostNamePrefix)
   ? '${vmNamePrefixLead}${vmNamePrefixWorkloadName}${sequence}'
   : customSessionHostNamePrefix
+
+var avdInfraResourceGroupName = replace(rgNamingStructure, '{rgname}', 'avd')
+var avdHostPoolResourceGroupName = useSeparateResourceGroupForSessionHosts
+  ? sessionHostResourceGroupName ?? replace(rgNamingStructure, '{rgname}', 'avd-sh')
+  : avdInfraResourceGroupName
 
 module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionHostAsResearchVm) {
   // This warning is incorrect
   #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'vdi'), 64)
   params: {
-    resourceGroupName: replace(rgNamingStructure, '{rgname}', 'avd')
+    resourceGroupName: avdInfraResourceGroupName
     tags: actualTags
     location: location
 
@@ -657,9 +670,13 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     sessionHostNamePrefix: vmNamePrefix
     sessionHostSize: sessionHostSize
 
+    sessionHostResourceGroupName: avdHostPoolResourceGroupName
+
     useSessionHostConfiguration: avdUseSessionHostConfiguration
     domainJoinCredentialKeyVaultSecretUris: domainJoinCredentialKeyVaultSecretUris
     localCredentialKeyVaultSecretUris: localCredentialKeyVaultSecretUris
+
+    enableAvmTelemetry: enableAvmTelemetry
   }
 }
 
