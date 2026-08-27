@@ -51,7 +51,7 @@ resource adf 'Microsoft.DataFactory/factories@2018-06-01' existing = {
 
 // As of 2022-10-23, Bicep does not have type info for this resource type
 #disable-next-line BCP081
-resource adfConnection 'Microsoft.Web/connections@2018-07-01' = {
+resource adfConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
   name: 'api-${adfName}'
   location: location
   properties: {
@@ -66,7 +66,7 @@ resource adfConnection 'Microsoft.Web/connections@2018-07-01' = {
 
 // As of 2022-10-23, Bicep does not have type info for this resource type
 #disable-next-line BCP081
-resource storageConnection 'Microsoft.Web/connections@2018-07-01' = {
+resource storageConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
   name: 'api-${prjStorageAcctName}'
   location: location
   properties: {
@@ -86,7 +86,7 @@ var isAzureUSGov = (az.environment().name == 'AzureUSGovernment')
 
 // As of 2022-10-23, Bicep does not have type info for this resource type
 #disable-next-line BCP081
-resource emailConnection 'Microsoft.Web/connections@2018-07-01' = {
+resource emailConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
   name: 'api-office365'
   location: location
   properties: {
