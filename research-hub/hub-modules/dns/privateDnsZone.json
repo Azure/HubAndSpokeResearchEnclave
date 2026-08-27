@@ -1,0 +1,116 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.46.1.21595",
+      "templateHash": "9842185309957310925"
+    }
+  },
+  "parameters": {
+    "zoneName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the private DNS zone, e.g., privatelink.blob.core.windows.net."
+      }
+    },
+    "vnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource ID of the virtual network to link to the private DNS zone."
+      }
+    },
+    "registrationEnabled": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "tags": {
+      "type": "object"
+    },
+    "deploymentNameStructure": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2024-06-01",
+      "name": "[parameters('zoneName')]",
+      "location": "global",
+      "tags": "[parameters('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[take(replace(parameters('deploymentNameStructure'), '{rtype}', format('link-{0}', parameters('zoneName'))), 64)]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "dnsZoneName": {
+            "value": "[parameters('zoneName')]"
+          },
+          "registrationEnabled": {
+            "value": "[parameters('registrationEnabled')]"
+          },
+          "vnetId": {
+            "value": "[parameters('vnetId')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.46.1.21595",
+              "templateHash": "3743592551240695453"
+            }
+          },
+          "parameters": {
+            "vnetId": {
+              "type": "string"
+            },
+            "dnsZoneName": {
+              "type": "string"
+            },
+            "registrationEnabled": {
+              "type": "bool",
+              "defaultValue": false
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2024-06-01",
+              "name": "[format('{0}/{1}', parameters('dnsZoneName'), uniqueString(parameters('vnetId')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[parameters('vnetId')]"
+                },
+                "registrationEnabled": "[parameters('registrationEnabled')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('zoneName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "zoneName": {
+      "type": "string",
+      "value": "[parameters('zoneName')]"
+    },
+    "zoneId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/privateDnsZones', parameters('zoneName'))]"
+    }
+  }
+}
