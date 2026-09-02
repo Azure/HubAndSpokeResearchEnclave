@@ -11,9 +11,9 @@ ARG AZ_RESOURCES_MODULE_VER
 
 
 USER root
-RUN wget "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VER}/powershell_${PWSH_VER}-1.deb_amd64.deb" \
-    && apt-get update && export DEBIAN_FRONTEND=noninteractive \
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install unzip \
+    && wget "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VER}/powershell_${PWSH_VER}-1.deb_amd64.deb" \
     && dpkg -i "powershell_${PWSH_VER}-1.deb_amd64.deb" \
     && apt-get install -f \
     && rm "powershell_${PWSH_VER}-1.deb_amd64.deb" \
