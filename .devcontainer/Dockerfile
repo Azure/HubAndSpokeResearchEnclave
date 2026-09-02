@@ -2,17 +2,24 @@ ARG PWSH_VER="7.6.5"
 ARG BICEP_VER="0.46.1"
 ARG TERRAFORM_VER="1.16.1"
 ARG AZ_RESOURCES_MODULE_VER="9.0.1"
+ARG AZ_CLI_VER="2.90.0"
 
 FROM mcr.microsoft.com/devcontainers/base:2.0.1-ubuntu24.04
 ARG PWSH_VER
 ARG BICEP_VER
 ARG TERRAFORM_VER
 ARG AZ_RESOURCES_MODULE_VER
-
+ARG AZ_CLI_VER
 
 USER root
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install unzip \
+    && apt-get -y install apt-transport-https ca-certificates curl gnupg lsb-release unzip zip \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -sLS https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/keyrings/microsoft.gpg > /dev/null \
+    && chmod go+r /etc/apt/keyrings/microsoft.gpg \
+    && printf "Types: deb\nURIs: https://packages.microsoft.com/repos/azure-cli/\nSuites: $(lsb_release -cs)\nComponents: main\nArchitectures: $(dpkg --print-architecture)\nSigned-by: /etc/apt/keyrings/microsoft.gpg\n" | tee "/etc/apt/sources.list.d/azure-cli.sources" \
+    && apt-get update \
+    && apt-get install -y  azure-cli=${AZ_CLI_VER}-1~$(lsb_release -cs) \
     && wget "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VER}/powershell_${PWSH_VER}-1.deb_amd64.deb" \
     && dpkg -i "powershell_${PWSH_VER}-1.deb_amd64.deb" \
     && apt-get install -f \
