@@ -621,7 +621,7 @@ var vmNamePrefix = empty(customSessionHostNamePrefix)
   : customSessionHostNamePrefix
 
 var avdInfraResourceGroupName = replace(rgNamingStructure, '{rgname}', 'avd')
-var avdHostPoolResourceGroupName = useSeparateResourceGroupForSessionHosts
+var avdSessionHostResourceGroupName = useSeparateResourceGroupForSessionHosts
   ? sessionHostResourceGroupName ?? replace(rgNamingStructure, '{rgname}', 'avd-sh')
   : avdInfraResourceGroupName
 
@@ -670,7 +670,7 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     sessionHostNamePrefix: vmNamePrefix
     sessionHostSize: sessionHostSize
 
-    sessionHostResourceGroupName: avdHostPoolResourceGroupName
+    sessionHostResourceGroupName: avdSessionHostResourceGroupName
 
     useSessionHostConfiguration: avdUseSessionHostConfiguration
     domainJoinCredentialKeyVaultSecretUris: domainJoinCredentialKeyVaultSecretUris
