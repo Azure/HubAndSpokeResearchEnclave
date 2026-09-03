@@ -90,6 +90,7 @@ module avdModule 'avd.bicep' = {
     localCredentialKeyVaultSecretUris: localCredentialKeyVaultSecretUris
     subnetId: computeSubnetId
     vmNamePrefix: sessionHostNamePrefix
+    sessionHostCount: sessionHostCount
 
     sessionHostResourceGroupName: sessionHostResourceGroup.name // Creates an implicit dependency
 
@@ -99,7 +100,7 @@ module avdModule 'avd.bicep' = {
 
 var useADDomainInformation = (logonType == 'ad')
 
-module sessionHostModule 'sessionHosts.bicep' = if (sessionHostCount > 0) {
+module sessionHostModule 'sessionHosts.bicep' = if (!useSessionHostConfiguration && sessionHostCount > 0) {
   scope: resourceGroup
   #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'avd-sh'), 64)

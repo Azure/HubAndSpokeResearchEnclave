@@ -52,6 +52,8 @@ param localCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
 @maxLength(9)
 param vmNamePrefix string?
 
+param sessionHostCount int?
+
 param enableAvmTelemetry bool
 
 /*
@@ -146,7 +148,7 @@ resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2026-04-01-preview'
   tags: tags
 }
 
-// TODO: Create role assignments for the managed identity of the host pool (?)
+// Create role assignments for the managed identity of the host pool (?)
 // - Desktop Virtualization Virtual Machine Contributor role
 //   - Resource group for the session hosts
 module resourceGroupRbacModule '../../module-library/roleAssignments/roleAssignment-rg.bicep' = if (useSessionHostConfiguration) {
@@ -373,6 +375,28 @@ resource sessionHostConfiguration 'Microsoft.DesktopVirtualization/hostPools/ses
     usernameSecretRbacModule
     passwordSecretRbacModule
   ]
+}
+
+var logOffDelay = 5
+
+resource sessionHostManagement 'Microsoft.DesktopVirtualization/hostPools/sessionHostManagements@2026-04-01-preview' = if (useSessionHostConfiguration) {
+  name: 'default'
+  parent: hostPool
+  properties: {
+    provisioning: {
+      canaryPolicy: 'Always'
+      instanceCount: sessionHostCount
+      setDrainMode: false
+    }
+    failedSessionHostCleanupPolicy: 'KeepOne'
+    scheduledDateTimeZone: 'UTC'
+    update: {
+      logOffDelayMinutes: logOffDelay
+      maxVmsRemoved: 1
+      deleteOriginalVm: false
+      logOffMessage: 'Your session will be logged off in ${logOffDelay} minutes for maintenance. Please save your work.'
+    }
+  }
 }
 
 resource desktopApplicationGroup 'Microsoft.DesktopVirtualization/applicationGroups@2026-04-01-preview' = if (deployDesktopAppGroup) {
