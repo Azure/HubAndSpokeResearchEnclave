@@ -39,6 +39,10 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && pwsh -Command "Import-Module -Name Az.Network" \
     && pwsh -Command "Install-Module -Name Az.Storage -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
     && pwsh -Command "Import-Module -Name Az.Storage" \
+    && pwsh -Command "Install-Module -Name Az.RecoveryServices -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
+    && pwsh -Command "Import-Module -Name Az.RecoveryServices" \
+    && pwsh -Command "Install-Module -Name Az.DataFactory -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
+    && pwsh -Command "Import-Module -Name Az.DataFactory" \
     && pwsh -Command "Install-Module -Name Pester -Scope AllUsers -Repository PSGallery  -Verbose -Force" \
     && pwsh -Command "Import-Module -Name Pester" \
     && pwsh -Command "Set-PSRepository -Name PSGallery -InstallationPolicy Untrusted"
