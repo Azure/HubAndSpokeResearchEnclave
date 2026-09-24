@@ -29,13 +29,7 @@ param hostPoolName string
 @secure()
 param hostPoolToken string?
 
-param imageReference imageReferenceType = {
-  // No image resource ID specified; use a default image
-  publisher: 'microsoftwindowsdesktop'
-  offer: 'office-365'
-  version: 'latest'
-  sku: 'win11-23h2-avd-m365'
-}
+param imageReference imageReferenceType
 
 @allowed(['ad', 'entraID'])
 param logonType string
@@ -55,7 +49,7 @@ import { imageReferenceType } from '../types/imageReferenceType.bicep'
 
 // Assumed to be the same between both cloud environments
 // Latest as of 2023-12-29
-var configurationFileName = 'Configuration_1.0.02544.255.zip'
+var configurationFileName = 'Configuration_1.0.03519.1433.zip'
 var artifactsLocation = 'https://wvdportalstorageblob.blob.${az.environment().suffixes.storage}/galleryartifacts/${configurationFileName}'
 
 // 2026-08-26: https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_1.0.03519.1433.zip
@@ -112,7 +106,7 @@ var computerNames = [for i in range(0, vmCount): '${vmNamePrefix}-${i}']
 var vmNames = [for i in range(0, vmCount): replace(namingStructure, '{rtype}', computerNames[i])]
 
 // Create the session hosts
-module sessionHostsModule '../../shared-modules/compute/virtualMachine.bicep' = [
+module virtualMachinesModule '../../shared-modules/compute/virtualMachine.bicep' = [
   for i in range(0, vmCount): {
     name: replace(deploymentNameStructure, '{rtype}', 'sh-${computerNames[i]}')
     params: {
@@ -174,7 +168,7 @@ resource avdAgentDscExtension 'Microsoft.Compute/virtualMachines/extensions@2023
     }
     // Wait for domain join to complete before registering as a session host
     dependsOn: [
-      sessionHostsModule[i]
+      virtualMachinesModule[i]
     ]
   }
 ]

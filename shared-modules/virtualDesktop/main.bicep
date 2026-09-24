@@ -48,8 +48,11 @@ param sessionHostResourceGroupName string
 param domainJoinCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
 param localCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
 
+param imageReference imageReferenceType?
+
 import { credentialKeyVaultSecretUrisType } from '../types/credentialKeyVaultSecretUrisType.bicep'
 import { activeDirectoryDomainInfo } from '../types/activeDirectoryDomainInfo.bicep'
+import { imageReferenceType } from '../types/imageReferenceType.bicep'
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
   name: resourceGroupName
@@ -63,6 +66,11 @@ resource sessionHostResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01
   tags: tags
 }
 
+// This module deploys the AVD infrastructure:
+// - Host pool
+// - Application group(s)
+// - Workspace
+// In case of Session Host Configuration, it also deploys the session hosts.
 module avdModule 'avd.bicep' = {
   scope: resourceGroup
   #disable-next-line BCP334
@@ -89,19 +97,22 @@ module avdModule 'avd.bicep' = {
     domainJoinCredentialKeyVaultSecretUris: domainJoinCredentialKeyVaultSecretUris
     localCredentialKeyVaultSecretUris: localCredentialKeyVaultSecretUris
     subnetId: computeSubnetId
-    vmNamePrefix: sessionHostNamePrefix
+    vmNamePrefix: useSessionHostConfiguration ? take(sessionHostNamePrefix, 9) : null
     sessionHostCount: sessionHostCount
 
     sessionHostResourceGroupName: sessionHostResourceGroup.name // Creates an implicit dependency
 
     enableAvmTelemetry: enableAvmTelemetry
+    imageReference: imageReference
   }
 }
 
 var useADDomainInformation = (logonType == 'ad')
 
-module sessionHostModule 'sessionHosts.bicep' = if (!useSessionHostConfiguration && sessionHostCount > 0) {
-  scope: resourceGroup
+// This module deploys the session hosts if the Session Host Configuration is not used
+// and the sessionHostCount is greater than 0.
+module sessionHostModule 'sessionHosts.bicep' = if (!useSessionHostConfiguration && imageReference != null && sessionHostCount > 0) {
+  scope: az.resourceGroup(sessionHostResourceGroupName)
   #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'avd-sh'), 64)
   params: {
@@ -127,5 +138,6 @@ module sessionHostModule 'sessionHosts.bicep' = if (!useSessionHostConfiguration
     deploymentNameStructure: deploymentNameStructure
     recoveryServicesVaultId: recoveryServicesVaultId
     backupPolicyName: backupPolicyName
+    imageReference: imageReference!
   }
 }

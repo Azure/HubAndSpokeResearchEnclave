@@ -57,11 +57,15 @@ param desktopAppGroupFriendlyName string = 'N/A'
 param workspaceFriendlyName string = 'N/A'
 // @description('The list of remote application groups and applications in each group to create. See sample parameters file for the syntax.')
 // param remoteAppApplicationGroupInfo array
-
-// TODO: Add support for custom images
-// @description('The Azure resource ID of the standalone image to use for new session hosts. If blank, will use the Windows 11 23H2 O365 Gen 2 Marketplace image.')
-// param sessionHostVmImageResourceId string = ''
-
+@description('The image reference for the session hosts. Defaults to the Windows 11 Enterprise multi-session 25H2 Microsoft 365 Gen 2 Marketplace image. Note: when using Session Host Configuration, the version must be set to a specific version string; `latest` is not supported for Session Host Configuration. When providing a custom image, use the `id` property only with the resource ID of your custom image definition.')
+param sessionHostImageReference imageReferenceType = {
+  publisher: 'microsoftwindowsdesktop'
+  offer: 'office-365'
+  sku: 'win11-25h2-avd-m365'
+  // Version must be explicit for Session Host Configuration
+  // 'latest' is not supported
+  version: avdUseSessionHostConfiguration ? '26200.9168.260811' : 'latest'
+}
 @description('Experimental. If true, will create policy exemptions for resources and policy definitions that are not compliant due to issues with common Azure built-in compliance policy initiatives.')
 param createPolicyExemptions bool = false
 @description('Required if policy exemptions must be created.')
@@ -245,6 +249,8 @@ param enableAvmTelemetry bool = true
 import * as backupPolicyTypes from '../shared-modules/types/backupPolicyTypes.bicep'
 
 import { credentialKeyVaultSecretUrisType } from '../shared-modules/types/credentialKeyVaultSecretUrisType.bicep'
+
+import { imageReferenceType } from '../shared-modules/types/imageReferenceType.bicep'
 
 //----------------------------- END TYPES ----------------------------------
 
@@ -455,6 +461,10 @@ module encryptionKeysModule '../shared-modules/security/encryptionKeys.bicep' = 
     keyExpirySeed: encryptionKeyExpirySeed
     debugMode: debugMode
   }
+  // HACK: 2026-09-21: Move dependsOn from diskEncryptionSetModule to here to see 
+  // if the keys are created AFTER the role assignment, we can avoid transient RBAC errors 
+  // in the diskEncryptionSetModule
+  dependsOn: [uamiKvRbacModule]
 }
 
 var kvEncryptionKeys = useCMK ? reduce(encryptionKeysModule.?outputs.keys!, {}, (cur, next) => union(cur, next)) : null
@@ -499,7 +509,7 @@ module diskEncryptionSetModule '../shared-modules/security/diskEncryptionSet.bic
     kvRoleDefinitionId: rolesModule.outputs.roles.KeyVaultCryptoServiceEncryptionUser
   }
 
-  dependsOn: [uamiKvRbacModule]
+  //dependsOn: [uamiKvRbacModule]
 }
 
 var hubManagementVmSubscriptionId = !empty(hubManagementVmId) ? split(hubManagementVmId, '/')[2] : ''
@@ -676,6 +686,8 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     domainJoinCredentialKeyVaultSecretUris: domainJoinCredentialKeyVaultSecretUris
     localCredentialKeyVaultSecretUris: localCredentialKeyVaultSecretUris
 
+    imageReference: sessionHostImageReference
+
     enableAvmTelemetry: enableAvmTelemetry
   }
 }
@@ -792,7 +804,7 @@ module recoveryServicesVaultModule '../shared-modules/recovery/recoveryServicesV
     tags: actualTags
 
     useCMK: useCMK
-    encryptionKeyUri: useCMK ? kvEncryptionKeys.rsv.keyUri : ''
+    encryptionKeyUri: useCMK ? kvEncryptionKeys.?rsv.keyUri : ''
 
     environment: environment
     namingConvention: namingConvention
@@ -839,7 +851,7 @@ output recoveryServicesVaultId string = recoveryServicesVaultModule.outputs.id
 @description('The name of the backup policy used for Azure VM backups in the spoke.')
 output vmBackupPolicyName string = recoveryServicesVaultModule.outputs.vmBackupPolicyName
 @description('The Azure resource ID of the disk encryption set used for customer-managed key encryption of managed disks in the spoke.')
-output diskEncryptionSetId string = diskEncryptionSetModule.outputs.id
+output diskEncryptionSetId string? = diskEncryptionSetModule.?outputs.id
 @description('The Azure resource ID of the ComputeSubnet.')
 output computeSubnetId string = networkModule.outputs.createdSubnets.computeSubnet.id
 @description('The resource group name of the compute resource group.')
