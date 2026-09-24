@@ -15,17 +15,13 @@ param privateEndpointSubnetId string
 
 param computeSubnetId string
 
+param useSessionHostConfiguration bool = false // Defaults to false for backward compatibility.
+
 param sessionHostCount int = 0
 param sessionHostNamePrefix string
 param sessionHostSize string
 
-param adOuPath string = ''
-param adDomainFqdn string = ''
-
-@secure()
-param domainJoinUsername string
-@secure()
-param domainJoinPassword string
+param adDomainJoinInfo activeDirectoryDomainInfo?
 
 @secure()
 param sessionHostLocalAdminUsername string
@@ -44,14 +40,40 @@ param roles object
 param location string
 param tags object
 
+param enableAvmTelemetry bool
+
+param sessionHostResourceGroupName string
+
+// Session Host configuration only
+param domainJoinCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
+param localCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
+
+param imageReference imageReferenceType?
+
+import { credentialKeyVaultSecretUrisType } from '../types/credentialKeyVaultSecretUrisType.bicep'
+import { activeDirectoryDomainInfo } from '../types/activeDirectoryDomainInfo.bicep'
+import { imageReferenceType } from '../types/imageReferenceType.bicep'
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
   name: resourceGroupName
   location: location
   tags: tags
 }
 
+resource sessionHostResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = if (resourceGroupName != sessionHostResourceGroupName) {
+  name: sessionHostResourceGroupName
+  location: location
+  tags: tags
+}
+
+// This module deploys the AVD infrastructure:
+// - Host pool
+// - Application group(s)
+// - Workspace
+// In case of Session Host Configuration, it also deploys the session hosts.
 module avdModule 'avd.bicep' = {
   scope: resourceGroup
+  #disable-next-line BCP334
   name: take(replace(deploymentNameStructure, '{rtype}', 'avd'), 64)
   params: {
     location: location
@@ -67,44 +89,55 @@ module avdModule 'avd.bicep' = {
     workspaceFriendlyName: workspaceFriendlyName
     usePrivateLinkForHostPool: usePrivateLinkForHostPool
     userObjectIds: userObjectIds
+
+    useSessionHostConfiguration: useSessionHostConfiguration
+    sessionHostSize: sessionHostSize
+    adDomainFqdn: adDomainJoinInfo.?adDomainFqdn
+    adOuPath: adDomainJoinInfo.?adOuPath
+    domainJoinCredentialKeyVaultSecretUris: domainJoinCredentialKeyVaultSecretUris
+    localCredentialKeyVaultSecretUris: localCredentialKeyVaultSecretUris
+    subnetId: computeSubnetId
+    vmNamePrefix: useSessionHostConfiguration ? take(sessionHostNamePrefix, 9) : null
+    sessionHostCount: sessionHostCount
+
+    sessionHostResourceGroupName: sessionHostResourceGroup.name // Creates an implicit dependency
+
+    enableAvmTelemetry: enableAvmTelemetry
+    imageReference: imageReference
   }
 }
 
 var useADDomainInformation = (logonType == 'ad')
 
-module sessionHostModule 'sessionHosts.bicep' =
-  if (sessionHostCount > 0) {
-    scope: resourceGroup
-    name: take(replace(deploymentNameStructure, '{rtype}', 'avd-sh'), 64)
-    params: {
-      namingStructure: namingStructure
-      subnetId: computeSubnetId
-      tags: tags
-      location: location
-      diskEncryptionSetId: useCMK ? diskEncryptionSetId : ''
+// This module deploys the session hosts if the Session Host Configuration is not used
+// and the sessionHostCount is greater than 0.
+module sessionHostModule 'sessionHosts.bicep' = if (!useSessionHostConfiguration && imageReference != null && sessionHostCount > 0) {
+  scope: az.resourceGroup(sessionHostResourceGroupName)
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'avd-sh'), 64)
+  params: {
+    namingStructure: namingStructure
+    subnetId: computeSubnetId
+    tags: tags
+    location: location
+    diskEncryptionSetId: useCMK ? diskEncryptionSetId : ''
 
-      hostPoolName: avdModule.outputs.hostPoolName
-      hostPoolToken: avdModule.outputs.hostPoolRegistrationToken
+    hostPoolName: avdModule.outputs.hostPoolName
+    hostPoolToken: avdModule.outputs.?hostPoolRegistrationToken
 
-      vmLocalAdminPassword: sessionHostLocalAdminPassword
-      vmLocalAdminUsername: sessionHostLocalAdminUsername
+    vmLocalAdminPassword: sessionHostLocalAdminPassword
+    vmLocalAdminUsername: sessionHostLocalAdminUsername
 
-      vmCount: sessionHostCount
-      vmNamePrefix: sessionHostNamePrefix
-      vmSize: sessionHostSize
+    vmCount: sessionHostCount
+    vmNamePrefix: sessionHostNamePrefix
+    vmSize: sessionHostSize
 
-      logonType: logonType
-      ADDomainInfo: useADDomainInformation
-        ? {
-            domainJoinPassword: domainJoinPassword
-            domainJoinUsername: domainJoinUsername
-            adDomainFqdn: adDomainFqdn
-            adOuPath: adOuPath
-          }
-        : null
+    logonType: logonType
+    ADDomainInfo: useADDomainInformation ? adDomainJoinInfo : null
 
-      deploymentNameStructure: deploymentNameStructure
-      recoveryServicesVaultId: recoveryServicesVaultId
-      backupPolicyName: backupPolicyName
-    }
+    deploymentNameStructure: deploymentNameStructure
+    recoveryServicesVaultId: recoveryServicesVaultId
+    backupPolicyName: backupPolicyName
+    imageReference: imageReference!
   }
+}
