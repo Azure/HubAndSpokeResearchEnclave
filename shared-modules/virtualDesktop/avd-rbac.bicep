@@ -10,6 +10,8 @@ param localCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
 param sessionHostResourceGroupName string
 param enableAvmTelemetry bool
 
+param customImageResourceGroupId string?
+
 import { credentialKeyVaultSecretUrisType } from '../types/credentialKeyVaultSecretUrisType.bicep'
 
 // Create role assignments for the managed identity of the host pool (?)
@@ -162,10 +164,29 @@ module passwordSecretRbacModule 'br/public:avm/ptn/authorization/resource-role-a
   }
 }
 
+var splitCustomImageResourceGroupId = customImageResourceGroupId != null
+  ? split(customImageResourceGroupId!, '/')
+  : null
+var customImageResourceGroupName = customImageResourceGroupId != null ? splitCustomImageResourceGroupId![4] : null
+var customImageSubscriptionId = customImageResourceGroupId != null ? splitCustomImageResourceGroupId![2] : null
+
 // LATER: Create additional role assignments for the managed identity
 // - Desktop Virtualization Virtual Machine Contributor role
 //   - Custom image resource group - which resource groups(s) are they in?
 //     ? Determine from image resource ID if custom image?
+module customImageResourceGroupRbacModule 'br/public:avm/res/authorization/role-assignment/rg-scope:0.1.1' = if (customImageResourceGroupId != null) {
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'hp-rbac-rg-img'), 64)
+  scope: resourceGroup(customImageSubscriptionId!, customImageResourceGroupName!)
+  params: {
+    principalId: hostPoolPrincipalId
+    roleDefinitionIdOrName: roles.DesktopVirtualizationVirtualMachineContributor
+    principalType: 'ServicePrincipal'
+    description: 'Role assignment for the managed identity of the host pool to deploy the custom image.'
+    enableTelemetry: enableAvmTelemetry
+  }
+}
+
 //   - NSG - we don't use a VM-based NSG
 // - Virtual Machine Contributor
 //   - NSG - we don't use a VM-based NSG

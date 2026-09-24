@@ -156,6 +156,8 @@ module avdRbacModule 'avd-rbac.bicep' = if (useSessionHostConfiguration) {
     localCredentialKeyVaultSecretUris: localCredentialKeyVaultSecretUris
     sessionHostResourceGroupName: sessionHostResourceGroupName
     virtualNetworkResourceId: virtualNetworkResourceId
+
+    customImageResourceGroupId: imageReference != null && !empty(imageReference.?id) ? imageReference.?id : null
   }
 }
 
