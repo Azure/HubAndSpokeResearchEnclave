@@ -101,6 +101,7 @@ var entraIDJoinCustomRdpProperties = (logonType == 'entraID')
   : ''
 var customRdpProperty = '${defaultRdpProperties}${entraIDJoinCustomRdpProperties}'
 var intuneMdmId = '0000000a-0000-0000-c000-000000000000'
+var availabilityZones = pickZones('Microsoft.Compute', 'virtualMachines', location, 3)
 
 var splitSubnetId = subnetId != null ? split(subnetId, '/') : []
 var virtualNetworkResourceId = subnetId != null
@@ -167,7 +168,7 @@ resource sessionHostConfiguration 'Microsoft.DesktopVirtualization/hostPools/ses
   parent: hostPool
   properties: {
     vmResourceGroup: sessionHostResourceGroupName
-    availabilityZones: [1, 2, 3]
+    availabilityZones: availabilityZones
     diskInfo: {
       managedDisk: {
         type: 'Premium_LRS'
