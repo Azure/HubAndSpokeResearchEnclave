@@ -34,7 +34,7 @@ param logonType string
 param useResourceTypeAbbreviations 'new' | 'old' = 'old'
 
 // Parameters for Session Host Configuration Support
-param sessionHostSize string = 'Standard_D4as_v6'
+param sessionHostSize string
 param adOuPath string?
 param adDomainFqdn string?
 param intuneEnrollment bool = false

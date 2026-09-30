@@ -440,6 +440,7 @@ module avdJumpBoxModule '../shared-modules/virtualDesktop/avd.bicep' = if (!rese
 
     remoteAppApplicationGroupInfo: [remoteDesktopAppGroupInfo]
     usePrivateLinkForHostPool: usePrivateEndpoints
+    sessionHostSize: jumpBoxSessionHostVmSize
 
     enableAvmTelemetry: enableAvmTelemetry
   }
