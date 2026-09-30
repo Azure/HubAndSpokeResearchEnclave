@@ -102,8 +102,8 @@ var entraIDJoinCustomRdpProperties = (logonType == 'entraID')
 var customRdpProperty = '${defaultRdpProperties}${entraIDJoinCustomRdpProperties}'
 var intuneMdmId = '0000000a-0000-0000-c000-000000000000'
 
-var splitSubnetId = subnetId != null ? split(subnetId, '/') : []
-var virtualNetworkResourceId = subnetId != null
+var splitSubnetId = subnetId != null ? split(subnetId!, '/') : ['invalid']
+var virtualNetworkResourceId = subnetId != null && length(splitSubnetId) > 8
   ? resourceId(splitSubnetId[4], 'Microsoft.Network/virtualNetworks', splitSubnetId[8])
   : null
 
@@ -119,6 +119,7 @@ resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2026-04-01-preview'
     loadBalancerType: 'BreadthFirst'
     preferredAppGroupType: deployDesktopAppGroup ? 'Desktop' : 'RailApplications'
     customRdpProperty: customRdpProperty
+    // The host pool registration token is only for Standard (not using Session Host Config) host pools
     registrationInfo: !useSessionHostConfiguration
       ? {
           registrationTokenOperation: 'Update'
