@@ -122,6 +122,8 @@ param localCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
 param useSeparateResourceGroupForSessionHosts bool = false
 @description('The name of the resource group to use for the AVD session hosts.')
 param sessionHostResourceGroupName string?
+@description('Which Azure reource type abbreviation to use for Azure Virtual Desktop resources. Use `old` for backwards compatibility and `new` for following the published abbreviations.')
+param useResourceTypeAbbreviations 'old' | 'new' = 'old'
 
 // Airlock parameters
 @description('If true, airlock reviews will take place centralized in the hub. If true, the hub* parameters must be specified also.')
@@ -687,6 +689,8 @@ module vdiModule '../shared-modules/virtualDesktop/main.bicep' = if (useSessionH
     localCredentialKeyVaultSecretUris: localCredentialKeyVaultSecretUris
 
     imageReference: sessionHostImageReference
+
+    useResourceTypeAbbreviations: useResourceTypeAbbreviations
 
     enableAvmTelemetry: enableAvmTelemetry
   }

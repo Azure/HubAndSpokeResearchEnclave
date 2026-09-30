@@ -44,6 +44,8 @@ param enableAvmTelemetry bool
 
 param sessionHostResourceGroupName string
 
+param useResourceTypeAbbreviations 'old' | 'new' = 'old'
+
 // Session Host configuration only
 param domainJoinCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
 param localCredentialKeyVaultSecretUris credentialKeyVaultSecretUrisType?
@@ -99,11 +101,12 @@ module avdModule 'avd.bicep' = {
     subnetId: computeSubnetId
     vmNamePrefix: useSessionHostConfiguration ? take(sessionHostNamePrefix, 9) : null
     sessionHostCount: sessionHostCount
-
     sessionHostResourceGroupName: sessionHostResourceGroup.name // Creates an implicit dependency
+    imageReference: imageReference
+
+    useResourceTypeAbbreviations: useResourceTypeAbbreviations
 
     enableAvmTelemetry: enableAvmTelemetry
-    imageReference: imageReference
   }
 }
 
