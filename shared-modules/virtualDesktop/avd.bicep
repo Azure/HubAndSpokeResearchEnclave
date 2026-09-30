@@ -102,7 +102,7 @@ var entraIDJoinCustomRdpProperties = (logonType == 'entraID')
 var customRdpProperty = '${defaultRdpProperties}${entraIDJoinCustomRdpProperties}'
 var intuneMdmId = '0000000a-0000-0000-c000-000000000000'
 
-var splitSubnetId = split(subnetId!, '/')
+var splitSubnetId = subnetId != null ? split(subnetId, '/') : []
 var virtualNetworkResourceId = subnetId != null
   ? resourceId(splitSubnetId[4], 'Microsoft.Network/virtualNetworks', splitSubnetId[8])
   : null
