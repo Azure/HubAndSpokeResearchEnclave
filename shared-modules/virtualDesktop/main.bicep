@@ -42,7 +42,7 @@ param tags object
 
 param enableAvmTelemetry bool
 
-param sessionHostResourceGroupName string
+param sessionHostResourceGroupName string = resourceGroupName
 
 param useResourceTypeAbbreviations 'old' | 'new' = 'old'
 
