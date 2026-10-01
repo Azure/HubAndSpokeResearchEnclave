@@ -11,6 +11,7 @@
     "azureedge",
     "azureportal",
     "azuresynapse",
+    "backupconfig",
     "catalogartifact",
     "enterpriseregistration",
     "Entra",
@@ -42,6 +43,7 @@
     "sovereignprodimedatapri",
     "sovereignprodimedatasec",
     "usgovcloudapi",
+    "vaultconfig",
     "wvdportalstorageblob"
   ]
 }
