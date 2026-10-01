@@ -88,7 +88,7 @@ module uamiRoleAssignmentModule '../../../module-library/roleAssignments/roleAss
 }
 
 // Ensure the private DNS zones for storage exist and reference them
-resource hubPrivateDnsZoneResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
+resource hubPrivateDnsZoneResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' existing = {
   name: privateDnsZonesResourceGroupName
   scope: subscription(privateDnsZonesSubscriptionId)
 }
@@ -155,7 +155,7 @@ module storageAccountModule 'storageAccount.bicep' = {
   }
 }
 
-resource hubManagementRg 'Microsoft.Resources/resourceGroups@2024-03-01' existing = if (domainJoin && length(fileShareNames) > 0) {
+resource hubManagementRg 'Microsoft.Resources/resourceGroups@2025-04-01' existing = if (domainJoin && length(fileShareNames) > 0) {
   name: hubManagementRgName
   scope: subscription(hubSubscriptionId)
 }

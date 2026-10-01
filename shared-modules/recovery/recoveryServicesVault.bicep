@@ -34,12 +34,12 @@ var vaultName = replace(namingStructure, '{rtype}', 'rsv')
 
 import * as backupPolicyTypes from '../types/backupPolicyTypes.bicep'
 
-resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
+resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' existing = {
   name: keyVaultResourceGroupName
   scope: subscription()
 }
 
-resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' = {
+resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2026-07-01' = {
   name: vaultName
   location: location
   tags: tags

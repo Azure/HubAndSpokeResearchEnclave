@@ -317,32 +317,32 @@ module rolesModule '../module-library/roles.bicep' = {
 }
 
 // Create the resource groups
-resource securityRg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+resource securityRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: replace(rgNamingStructure, '{rgname}', 'security')
   location: location
   tags: actualTags
 }
 
-resource storageRg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+resource storageRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: replace(rgNamingStructure, '{rgname}', 'storage')
   location: location
   tags: actualTags
 }
 
-resource networkRg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+resource networkRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: replace(rgNamingStructure, '{rgname}', 'network')
   location: location
   tags: actualTags
 }
 
-resource backupRg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+resource backupRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: replace(rgNamingStructure, '{rgname}', 'backup')
   location: location
   tags: actualTags
 }
 
 // Create a resource group for additional compute resources (like shared VMs)
-resource computeRg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+resource computeRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: replace(rgNamingStructure, '{rgname}', 'compute')
   location: location
   tags: actualTags

@@ -100,7 +100,7 @@ resource privateStorageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' ex
 }
 
 // Get a reference to the already existing Key Vault resource group for this spoke
-resource spokeKeyVaultRg 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
+resource spokeKeyVaultRg 'Microsoft.Resources/resourceGroups@2025-04-01' existing = {
   name: keyVaultResourceGroupName
   scope: subscription()
 }
