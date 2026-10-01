@@ -41,7 +41,7 @@ var baseName = !empty(subWorkloadName)
   : replace(namingStructure, '-{subWorkloadName}', '')
 
 // Project's private storage account
-resource prjStorageAcct 'Microsoft.Storage/storageAccounts@2022-09-01' existing = {
+resource prjStorageAcct 'Microsoft.Storage/storageAccounts@2026-04-01' existing = {
   name: prjStorageAcctName
 }
 
@@ -49,7 +49,7 @@ resource adf 'Microsoft.DataFactory/factories@2018-06-01' existing = {
   name: adfName
 }
 
-// As of 2022-10-23, Bicep does not have type info for this resource type
+// As of 2026-09-30, Bicep does not have type info for this resource type/API version
 #disable-next-line BCP081
 resource adfConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
   name: 'api-${adfName}'
@@ -64,7 +64,7 @@ resource adfConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
   tags: tags
 }
 
-// As of 2022-10-23, Bicep does not have type info for this resource type
+// As of 2026-09-30, Bicep does not have type info for this resource type/API version
 #disable-next-line BCP081
 resource storageConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
   name: 'api-${prjStorageAcctName}'
@@ -84,7 +84,7 @@ resource storageConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
 
 var isAzureUSGov = (az.environment().name == 'AzureUSGovernment')
 
-// As of 2022-10-23, Bicep does not have type info for this resource type
+// As of 2026-09-30, Bicep does not have type info for this resource type/API version
 #disable-next-line BCP081
 resource emailConnection 'Microsoft.Web/connections@2018-07-01-preview' = {
   name: 'api-office365'

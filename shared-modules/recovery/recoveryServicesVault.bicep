@@ -117,7 +117,7 @@ module keyVaultRoleAssignment '../../module-library/roleAssignments/roleAssignme
 }
 
 // Enable soft delete settings
-resource backupConfig 'Microsoft.RecoveryServices/vaults/backupconfig@2024-04-01' = {
+resource backupConfig 'Microsoft.RecoveryServices/vaults/backupconfig@2026-07-01' = {
   name: 'vaultconfig'
   location: location
   parent: recoveryServicesVault
@@ -172,14 +172,14 @@ var backupPolicyAzureStorageProperties = {
 }
 
 // Create an enhanced VM backup policy to backup multiple times per day
-resource iaasVmBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2024-04-01' = {
+resource iaasVmBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2026-07-01' = {
   name: 'EnhancedPolicy-${workloadName}-${sequenceFormatted}'
   parent: recoveryServicesVault
   properties: union(backupPolicyCommonProperties, backupPolicyIaasVmProperties)
 }
 
 // Create a single Azure File backup policy, even if there are multiple file shares or storage accounts
-resource filesBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2024-04-01' = if (length(protectedAzureFileShares) > 0) {
+resource filesBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2026-07-01' = if (length(protectedAzureFileShares) > 0) {
   name: 'AzureFileSharesPolicy-${workloadName}-${sequenceFormatted}'
   parent: recoveryServicesVault
   properties: union(backupPolicyCommonProperties, backupPolicyAzureStorageProperties)

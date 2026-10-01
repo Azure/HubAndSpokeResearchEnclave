@@ -3,17 +3,17 @@ param principalId string
 param roleDefinitionId string
 param fileShareName string
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' existing = {
   name: storageAccountName
 }
 
-resource fileService 'Microsoft.Storage/storageAccounts/fileServices@2023-01-01' existing = {
+resource fileService 'Microsoft.Storage/storageAccounts/fileServices@2026-04-01' existing = {
   name: 'default'
   parent: storageAccount
 }
 
 #disable-next-line BCP081
-resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/fileShares@2022-09-01' existing = {
+resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/fileShares@2026-04-01' existing = {
   name: fileShareName
   parent: fileService
 }

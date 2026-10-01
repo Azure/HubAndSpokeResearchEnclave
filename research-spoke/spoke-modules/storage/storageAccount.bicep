@@ -36,7 +36,7 @@ param applyDeleteLock bool = !debugMode
 
 param allowedIpAddresses array = []
 
-@description('Role assignements to create on the storage account.')
+@description('Role assignments to create on the storage account.')
 param storageAccountRoleAssignments roleAssignmentType
 
 import { roleAssignmentType } from '../../../shared-modules/types/roleAssignment.bicep'
@@ -47,7 +47,7 @@ var actualAllowedIpAddresses = debugMode ? concat(allowedIpAddresses, array(debu
 
 var useCMK = !empty(uamiId) && !empty(encryptionKeyName) && !empty(keyVaultUri)
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' = {
   name: storageAccountName
   location: location
   tags: tags
@@ -151,13 +151,13 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
 }
 
-resource fileService 'Microsoft.Storage/storageAccounts/fileServices@2022-09-01' = {
+resource fileService 'Microsoft.Storage/storageAccounts/fileServices@2026-04-01' = {
   name: 'default'
   parent: storageAccount
 }
 
 @batchSize(1)
-resource fileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-09-01' = [
+resource fileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2026-04-01' = [
   for shareName in fileShareNames: {
     name: shareName
     parent: fileService
@@ -167,12 +167,12 @@ resource fileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2022-
   }
 ]
 
-resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2022-09-01' = {
+resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2026-04-01' = {
   name: 'default'
   parent: storageAccount
 }
 
-resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = [
+resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2026-04-01' = [
   for containerName in containerNames: {
     name: containerName
     parent: blobService
@@ -190,7 +190,7 @@ resource storageAccountLock 'Microsoft.Authorization/locks@2020-05-01' = if (app
 
 // Create one private endpoint per specified sub resource (group)
 @batchSize(1)
-resource privateEndpoints 'Microsoft.Network/privateEndpoints@2024-01-01' = [
+resource privateEndpoints 'Microsoft.Network/privateEndpoints@2025-09-01' = [
   for pe in privateEndpointInfo: {
     name: replace(namingStructure, '{rtype}', 'st-pe-${pe.subResourceName}')
     location: location
@@ -216,7 +216,7 @@ resource privateEndpoints 'Microsoft.Network/privateEndpoints@2024-01-01' = [
 
 // Register each private endpoint in the respective private DNS zone
 @batchSize(1)
-resource privateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = [
+resource privateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2025-09-01' = [
   for (pe, i) in privateEndpointInfo: {
     name: 'default'
     parent: privateEndpoints[i]

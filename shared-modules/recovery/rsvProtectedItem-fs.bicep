@@ -8,7 +8,7 @@ var rsvName = split(recoveryServicesVaultId, '/')[8]
 var storageAccountRgName = split(storageAccountId, '/')[4]
 var storageAccountName = split(storageAccountId, '/')[8]
 
-resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers@2024-04-01' = {
+resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers@2026-07-01' = {
   name: '${rsvName}/Azure/storagecontainer;Storage;${storageAccountRgName};${storageAccountName}'
   properties: {
     backupManagementType: 'AzureStorage'
@@ -17,7 +17,7 @@ resource protectionContainer 'Microsoft.RecoveryServices/vaults/backupFabrics/pr
   }
 }
 
-resource protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2024-04-01' = {
+resource protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2026-07-01' = {
   parent: protectionContainer
   name: 'AzureFileShare;${fileShareName}'
   properties: {

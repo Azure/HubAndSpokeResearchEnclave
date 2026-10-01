@@ -3,7 +3,7 @@ param principalId string
 param roleDefinitionId string
 param principalType string = ''
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' existing = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' existing = {
   name: storageAccountName
 }
 

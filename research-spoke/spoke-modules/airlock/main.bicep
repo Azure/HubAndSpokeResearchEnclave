@@ -95,7 +95,7 @@ import { activeDirectoryDomainInfo } from '../../../shared-modules/types/activeD
 
 // Get a reference to the already existing private storage account for this spoke
 // Assumed in the same resource group
-resource privateStorageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' existing = {
+resource privateStorageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' existing = {
   name: spokePrivateStorageAccountName
 }
 
@@ -403,7 +403,7 @@ module eventGridForPrivateModule 'eventGrid.bicep' = {
   }
 }
 
-resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2026-02-01' existing = {
   name: keyVaultName
   scope: spokeKeyVaultRg
 }

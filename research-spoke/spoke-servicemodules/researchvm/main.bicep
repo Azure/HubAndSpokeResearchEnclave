@@ -55,7 +55,7 @@ import { imageReferenceType } from '../../../shared-modules/types/imageReference
 var deploymentNameStructure = 'researchVm-{rtype}-${deploymentTime}'
 
 // Create a new availability set for the session hosts
-resource availabilitySet 'Microsoft.Compute/availabilitySets@2023-03-01' = if (vmCount > 1) {
+resource availabilitySet 'Microsoft.Compute/availabilitySets@2026-04-01' = if (vmCount > 1) {
   name: replace(namingStructure, '{rtype}', 'avail')
   location: location
   tags: tags
@@ -72,7 +72,7 @@ var computerNames = [for i in range(0, vmCount): '${vmNamePrefix}-${i}']
 var vmNames = [for i in range(0, vmCount): replace(namingStructure, '{rtype}', computerNames[i])]
 
 // Create the NICs for each VM
-resource nics 'Microsoft.Network/networkInterfaces@2022-11-01' = [
+resource nics 'Microsoft.Network/networkInterfaces@2025-09-01' = [
   for i in range(0, vmCount): {
     name: replace(namingStructure, '{rtype}', '${computerNames[i]}-nic')
     location: location
@@ -131,7 +131,7 @@ module virtualMachinesModule '../../../shared-modules/compute/virtualMachine.bic
 ]
 
 // Create a shortcut on the desktop to the research data file share
-resource shortcutExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = [
+resource shortcutExtension 'Microsoft.Compute/virtualMachines/extensions@2026-04-01' = [
   for i in range(0, vmCount): if (!empty(shortcutTargetPath)) {
     name: '${vmNames[i]}/CustomScriptExtension'
     location: location

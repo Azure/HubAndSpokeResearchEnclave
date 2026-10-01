@@ -63,7 +63,7 @@ param roles object = {}
 // Types
 import { activeDirectoryDomainInfo } from '../../../shared-modules/types/activeDirectoryDomainInfo.bicep'
 
-resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2026-02-01' existing = {
   name: keyVaultName
   scope: resourceGroup(keyVaultSubscriptionId, keyVaultResourceGroupName)
 }
