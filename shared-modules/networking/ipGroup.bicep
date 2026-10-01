@@ -6,7 +6,7 @@ param location string = resourceGroup().location
 param ipAddresses array
 param tags object
 
-resource ipGroup 'Microsoft.Network/ipGroups@2023-11-01' = {
+resource ipGroup 'Microsoft.Network/ipGroups@2025-09-01' = {
   name: name
   location: location
   tags: tags

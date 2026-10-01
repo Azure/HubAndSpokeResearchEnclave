@@ -23,7 +23,7 @@ param subPlans mdfcSubPlansType
 
 // Enable one plan at a time only, otherwise failures may occur
 @batchSize(1)
-resource defenderPlan 'Microsoft.Security/pricings@2022-03-01' = [
+resource defenderPlan 'Microsoft.Security/pricings@2024-01-01' = [
   for plan in actualPlansToEnable: {
     name: plan
     properties: {

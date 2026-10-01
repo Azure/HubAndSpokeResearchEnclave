@@ -2,7 +2,7 @@ param appSvcName string
 param principalId string
 param roleDefinitionId string
 
-resource appSvc 'Microsoft.Web/sites@2022-03-01' existing = {
+resource appSvc 'Microsoft.Web/sites@2025-03-01' existing = {
   name: appSvcName
 }
 

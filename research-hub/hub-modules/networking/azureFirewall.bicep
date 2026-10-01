@@ -30,7 +30,7 @@ var createManagementIPConfiguration = (firewallTier == 'Basic' || forcedTunnelin
 var publicIpCount = (firewallTier == 'Basic' && !forcedTunneling) ? 2 : 1
 
 // Create the public IP address(es) for the Firewall
-resource firewallPublicIps 'Microsoft.Network/publicIPAddresses@2022-09-01' = [
+resource firewallPublicIps 'Microsoft.Network/publicIPAddresses@2025-09-01' = [
   for i in range(0, publicIpCount): {
     name: replace(namingStructure, '{rtype}', 'pip-fw${i}')
     location: location
@@ -205,7 +205,7 @@ var ruleCollectionGroupsAll = union(
 // LATER: Divide into optional rule collections: AzurePlatform, AVDRDWeb (rename!), ResearchDataSources (?)
 
 @batchSize(1) // Do not process more than one rule collection group at a time
-resource ruleCollectionGroups 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2022-07-01' = [
+resource ruleCollectionGroups 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2025-09-01' = [
   for group in items(ruleCollectionGroupsAll): {
     name: group.key
     parent: firewallPolicy
@@ -221,7 +221,7 @@ resource ruleCollectionGroups 'Microsoft.Network/firewallPolicies/ruleCollection
 var managementIPConfigPublicIPIndex = forcedTunneling ? 0 : 1
 
 // Create Azure Firewall resource
-resource firewall 'Microsoft.Network/azureFirewalls@2022-01-01' = {
+resource firewall 'Microsoft.Network/azureFirewalls@2025-09-01' = {
   name: replace(namingStructure, '{rtype}', 'fw')
   location: location
 

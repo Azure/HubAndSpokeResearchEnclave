@@ -9,15 +9,15 @@ param keyVaultName string
 
 param whichKey int = 1
 
-resource storageAccountResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' existing = {
+resource storageAccountResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' existing = {
   name: storageAccountResourceGroupName
 }
 
-resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' existing = {
+resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' existing = {
   name: keyVaultResourceGroupName
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' existing = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2026-04-01' existing = {
   name: storageAccountName
   scope: storageAccountResourceGroup
 }

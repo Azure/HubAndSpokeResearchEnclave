@@ -6,7 +6,7 @@ param location string = resourceGroup().location
 param tags object
 
 // Create a static public IP address for the virtual network gateway
-resource vngPublicIP 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
+resource vngPublicIP 'Microsoft.Network/publicIPAddresses@2025-09-01' = {
   name: replace(namingStructure, '{rtype}', 'pip-vng')
   location: location
   sku: {
@@ -16,12 +16,12 @@ resource vngPublicIP 'Microsoft.Network/publicIPAddresses@2023-06-01' = {
     publicIPAddressVersion: 'IPv4'
     publicIPAllocationMethod: 'Static'
   }
-  zones: [ '1', '2', '3' ]
+  zones: ['1', '2', '3']
   tags: tags
 }
 
 // Create an VPN virtual network gateway
-resource virtualNetworkGateway 'Microsoft.Network/virtualNetworkGateways@2023-06-01' = {
+resource virtualNetworkGateway 'Microsoft.Network/virtualNetworkGateways@2025-09-01' = {
   name: replace(namingStructure, '{rtype}', 'vng')
   location: location
   properties: {

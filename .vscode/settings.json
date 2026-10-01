@@ -11,10 +11,13 @@
     "azureedge",
     "azureportal",
     "azuresynapse",
+    "backupconfig",
     "catalogartifact",
     "enterpriseregistration",
     "Entra",
     "Fqdns",
+    "iaasvmcontainer",
+    "iaasvmcontainerv",
     "kvname",
     "LDAPS",
     "loganalytics",
@@ -29,6 +32,8 @@
     "msftauth",
     "msftauthimages",
     "mstsc",
+    "Peerings",
+    "pricings",
     "privatelink",
     "rdweb",
     "reactblade",
@@ -38,6 +43,7 @@
     "sovereignprodimedatapri",
     "sovereignprodimedatasec",
     "usgovcloudapi",
+    "vaultconfig",
     "wvdportalstorageblob"
   ]
 }

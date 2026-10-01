@@ -41,12 +41,12 @@ var adlsGen2LinkedServiceName = 'ls_ADLSGen2_Generic'
 var azFilesLinkedServiceName = 'ls_AzFiles_Generic'
 var kvLinkedServiceName = 'ls_KeyVault'
 
-resource privateStorageAcct 'Microsoft.Storage/storageAccounts@2021-08-01' existing = {
+resource privateStorageAcct 'Microsoft.Storage/storageAccounts@2026-04-01' existing = {
   name: privateStorageAcctName
 }
 
 // The Key Vault where ADF can get the connection string for the Azure File Share linked service
-resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2026-02-01' existing = {
   name: keyVaultName
   scope: resourceGroup(keyVaultResourceGroupName)
 }
@@ -76,7 +76,7 @@ resource adf 'Microsoft.DataFactory/factories@2018-06-01' = {
 
 var dataFactoryPrivateEndpointName = replace(baseName, '{rtype}', 'pe-adf')
 
-resource dataFactoryPrivateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = if (usePrivateEndpoint) {
+resource dataFactoryPrivateEndpoint 'Microsoft.Network/privateEndpoints@2025-09-01' = if (usePrivateEndpoint) {
   name: dataFactoryPrivateEndpointName
   location: location
   properties: {
@@ -109,7 +109,7 @@ var dataFactoryFqdn = dataFactoryFqdns[az.environment().name]
 var privateDnsZonesSubscriptionId = usePrivateEndpoint ? split(privateDnsZonesResourceGroupId, '/')[2] : ''
 var privateDnsZonesResourceGroupName = usePrivateEndpoint ? split(privateDnsZonesResourceGroupId, '/')[4] : ''
 
-resource dataFactoryPrivateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = if (usePrivateEndpoint) {
+resource dataFactoryPrivateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2025-09-01' = if (usePrivateEndpoint) {
   name: 'default'
   parent: dataFactoryPrivateEndpoint
   properties: {

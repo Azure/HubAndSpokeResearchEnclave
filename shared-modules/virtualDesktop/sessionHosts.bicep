@@ -61,7 +61,7 @@ var artifactsLocation = 'https://wvdportalstorageblob.blob.${az.environment().su
 var intuneMdmId = '0000000a-0000-0000-c000-000000000000'
 
 // Create a new availability set for the session hosts
-resource availabilitySet 'Microsoft.Compute/availabilitySets@2023-03-01' = {
+resource availabilitySet 'Microsoft.Compute/availabilitySets@2026-04-01' = {
   name: replace(namingStructure, '{rtype}', 'avail')
   location: location
   tags: tags
@@ -75,7 +75,7 @@ resource availabilitySet 'Microsoft.Compute/availabilitySets@2023-03-01' = {
 }
 
 // Create the NICs for each session host
-resource nics 'Microsoft.Network/networkInterfaces@2022-11-01' = [
+resource nics 'Microsoft.Network/networkInterfaces@2025-09-01' = [
   for i in range(0, vmCount): {
     name: replace(namingStructure, '{rtype}', '${computerNames[i]}-nic') // '${vmNamePrefix}${i}-nic'
     location: location
@@ -140,7 +140,7 @@ module sessionHostsModule '../../shared-modules/compute/virtualMachine.bicep' = 
 ]
 
 // Deploy the AVD agents to each session host
-resource avdAgentDscExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = [
+resource avdAgentDscExtension 'Microsoft.Compute/virtualMachines/extensions@2026-04-01' = [
   for i in range(0, vmCount): {
     name: '${vmNames[i]}/AvdAgentDSC'
     location: location
