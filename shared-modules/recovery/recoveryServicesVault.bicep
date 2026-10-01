@@ -71,8 +71,19 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2026-07-01' = 
     securitySettings: {
       // Default to immutable but don't lock the policy
       immutabilitySettings: {
-        state: debugMode ? 'Disabled' : 'Unlocked'
+        state: !debugMode ? 'Unlocked' : 'Disabled'
+        configuration: !debugMode
+          ? {
+              type: 'AsPerPolicy'
+            }
+          : null
       }
+
+      // softDeleteSettings: {
+      //   enhancedSecurityState: debugMode ? 'Disabled' : 'Enabled'
+      //   softDeleteState: debugMode ? 'Disabled' : 'Enabled'
+      //   softDeleteRetentionPeriodInDays: 14
+      // }
     }
 
     // Do not allow cross-subscription restores (to avoid leaking data between projects)
@@ -117,16 +128,17 @@ module keyVaultRoleAssignment '../../module-library/roleAssignments/roleAssignme
 }
 
 // Enable soft delete settings
-resource backupConfig 'Microsoft.RecoveryServices/vaults/backupconfig@2026-07-01' = {
-  name: 'vaultconfig'
-  location: location
-  parent: recoveryServicesVault
-  properties: {
-    enhancedSecurityState: debugMode ? 'Disabled' : 'Enabled'
-    isSoftDeleteFeatureStateEditable: true
-    softDeleteFeatureState: debugMode ? 'Disabled' : 'Enabled'
-  }
-}
+// resource backupConfig 'Microsoft.RecoveryServices/vaults/backupconfig@2026-07-01' = {
+//   name: 'vaultconfig'
+//   location: location
+//   parent: recoveryServicesVault
+//   properties: {
+//     enhancedSecurityState: debugMode ? 'Disabled' : 'Enabled'
+//     // HACK: 2026-09-30: svaelter: Soft Delete is now always on in all regions
+//     // isSoftDeleteFeatureStateEditable: true
+//     // softDeleteFeatureState: debugMode ? 'Disabled' : 'Enabled'
+//   }
+// }
 
 // Break up the naming convention on the sequence placeholder to use for the backup RG name
 // The "n" in the backup resource group is another sequence number determined by Azure Backup
