@@ -13,28 +13,33 @@
 [CmdletBinding()]
 param ()
 
+$powerShellRoot = Split-Path -Parent $PSScriptRoot
+$modulePath = Join-Path $powerShellRoot 'Modules\AzSubscriptionManagement.psm1'
+$moduleDocsPath = Join-Path $powerShellRoot 'Modules\docs'
+$researchSpokePath = Join-Path (Split-Path -Parent (Split-Path -Parent $powerShellRoot)) 'research-spoke'
+
 # Generate markdown help for the AzSubscriptionManagement module using platyPS
 try {
     Import-Module platyPS
-    Import-Module ../Modules/AzSubscriptionManagement.psm1 -ErrorAction Continue
+    Import-Module $modulePath
 
-    New-MarkDownHelp -Module AzSubscriptionManagement -OutputFolder ../Modules/docs -Force
+    New-MarkDownHelp -Module AzSubscriptionManagement -OutputFolder $moduleDocsPath -Force
 }
 finally {
     Remove-Module AzSubscriptionManagement
     Remove-Module platyPS
 }
 
-# Generate markdown help for the research hub module using PSDocs
+# Generate markdown help for the research spoke module using PSDocs
+$CurrentLocation = Get-Location
 try {
     Import-Module PSDocs
-    [string]$CurrentLocation = Get-Location
-    Set-Location -Path ../../../research-spoke/
+    Set-Location -Path $researchSpokePath
     bicep build ./main.bicep
     Invoke-PSDocument -Path . -OutputPath ./docs -InputObject ./main.json
 }
 finally {
-    Remove-Item -Path ./main.json -Force
+    Remove-Item -Path (Join-Path $researchSpokePath 'main.json') -Force
     Set-Location -Path $CurrentLocation
     Remove-Module PSDocs
 }
