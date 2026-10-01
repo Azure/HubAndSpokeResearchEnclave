@@ -234,7 +234,7 @@ resource privateEndpointDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZ
   }
 ]
 
-resource policyExemption 'Microsoft.Authorization/policyExemptions@2023-04-01' = if (createPolicyExemptions && !empty(policyAssignmentId)) {
+resource policyExemption 'Microsoft.Authorization/policyExemptions@2026-01-01-preview' = if (createPolicyExemptions && !empty(policyAssignmentId)) {
   name: '${storageAccount.name}-exemption'
   scope: storageAccount
   properties: {
