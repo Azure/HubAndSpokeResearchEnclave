@@ -2,7 +2,7 @@ param uamiName string
 param location string = resourceGroup().location
 param tags object
 
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: uamiName
   location: location
   tags: tags
