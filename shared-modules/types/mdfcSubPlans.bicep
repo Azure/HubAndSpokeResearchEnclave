@@ -3,7 +3,7 @@
 type mdfcSubPlansType = {
   StorageAccounts: 'DefenderForStorageV2'
   SqlServers: string?
-  VirtualMachines: 'P2'
+  VirtualMachines: 'P1' | 'P2'
   Arm: 'PerApiCall' | 'PerSubscription'
   KeyVaults: 'PerTransaction' | 'PerKeyVault'
 }
