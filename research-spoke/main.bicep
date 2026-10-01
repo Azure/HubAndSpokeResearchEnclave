@@ -212,7 +212,7 @@ param backupSchedulePolicyTimeZone string = 'UTC'
 param retentionBackupTime string = '2023-12-31T08:00:00.000Z'
 
 @description('Microsoft Defender for Cloud subscription plans to enable. See [https://learn.microsoft.com/azure/defender-for-cloud/pricing](https://learn.microsoft.com/azure/defender-for-cloud/pricing) for more information.')
-// Legacy values for Arm: 'PerApiCAll' and KeyVaults: 'PerTransaction' are no longer valid.
+// Legacy values for Arm: `PerApiCall` and KeyVaults: `PerTransaction` are no longer valid.
 // These are set as defaults to allow compatibility with older deployments. The default values will be removed in a future release.
 // use the following values in new deployments:
 // param mdfcSubPlans = {
