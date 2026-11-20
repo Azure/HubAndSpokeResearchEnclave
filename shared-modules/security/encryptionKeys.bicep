@@ -21,40 +21,44 @@ param keysToCreate array = [
   'rsv'
 ]
 
-var rotationPolicy = !debugMode ? {
-  attributes: {
-    expiryTime: keyValidityPeriod
-  }
-  lifetimeActions: [
-    // Notify (using Event Grid) before key expires
-    // LATER: Set up Event Grid subscription?
-    // If the notify period is less than the rotate period, notification shouldn't be sent
-    {
-      action: {
-        type: 'notify'
+var rotationPolicy = !debugMode
+  ? {
+      attributes: {
+        expiryTime: keyValidityPeriod
       }
-      trigger: {
-        timeBeforeExpiry: notifyPeriod
-      }
+      lifetimeActions: [
+        // Notify (using Event Grid) before key expires
+        // LATER: Set up Event Grid subscription?
+        // If the notify period is less than the rotate period, notification shouldn't be sent
+        {
+          action: {
+            type: 'notify'
+          }
+          trigger: {
+            timeBeforeExpiry: notifyPeriod
+          }
+        }
+        // Rotate the key before it expires
+        {
+          action: {
+            type: 'rotate'
+          }
+          trigger: {
+            timeBeforeExpiry: autoRotatePeriod
+          }
+        }
+      ]
     }
-    // Rotate the key before it expires
-    {
-      action: {
-        type: 'rotate'
-      }
-      trigger: {
-        timeBeforeExpiry: autoRotatePeriod
-      }
-    }
-  ]
-} : null
+  : null
 
 var defaultKeyAttributes = {
   enabled: true
 }
-var keyExpiryAttributes = !debugMode ? {
-  exp: dateTimeToEpoch(expiryDateTime)
-} : {}
+var keyExpiryAttributes = !debugMode
+  ? {
+      exp: dateTimeToEpoch(expiryDateTime)
+    }
+  : {}
 var actualKeyAttributes = union(defaultKeyAttributes, keyExpiryAttributes)
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
@@ -62,21 +66,25 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' existing = {
 }
 
 @onlyIfNotExists()
-resource keys 'Microsoft.KeyVault/vaults/keys@2023-02-01' = [for key in keysToCreate: {
-  name: key
-  parent: keyVault
-  properties: {
-    attributes: actualKeyAttributes
-    kty: 'RSA'
-    rotationPolicy: rotationPolicy
+resource keys 'Microsoft.KeyVault/vaults/keys@2026-02-01' = [
+  for key in keysToCreate: {
+    name: key
+    parent: keyVault
+    properties: {
+      attributes: actualKeyAttributes
+      kty: 'RSA'
+      rotationPolicy: rotationPolicy
+    }
   }
-}]
+]
 
-output keys array = [for (key, i) in keysToCreate: {
-  '${key}': {
-    id: keys[i].id
-    name: keys[i].name
-    keyUri: keys[i].properties.keyUri
-    keyUriWithVersion: keys[i].properties.keyUriWithVersion
+output keys array = [
+  for (key, i) in keysToCreate: {
+    '${key}': {
+      id: keys[i].id
+      name: keys[i].name
+      keyUri: keys[i].properties.keyUri
+      keyUriWithVersion: keys[i].properties.keyUriWithVersion
+    }
   }
-}]
+]

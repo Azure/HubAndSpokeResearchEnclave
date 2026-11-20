@@ -4,7 +4,7 @@ param securityRules array = []
 
 param tags object = {}
 
-resource nsg 'Microsoft.Network/networkSecurityGroups@2022-01-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2025-09-01' = {
   name: nsgName
   location: location
   properties: {
