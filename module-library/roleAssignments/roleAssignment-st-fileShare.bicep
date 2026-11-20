@@ -13,7 +13,7 @@ resource fileService 'Microsoft.Storage/storageAccounts/fileServices@2026-04-01'
 }
 
 #disable-next-line BCP081
-resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/fileShares@2026-04-01' existing = {
+resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2026-04-01' existing = {
   name: fileShareName
   parent: fileService
 }
