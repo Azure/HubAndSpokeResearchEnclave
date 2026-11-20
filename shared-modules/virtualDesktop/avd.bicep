@@ -101,7 +101,7 @@ var entraIDJoinCustomRdpProperties = (logonType == 'entraID')
   : ''
 var customRdpProperty = '${defaultRdpProperties}${entraIDJoinCustomRdpProperties}'
 var intuneMdmId = '0000000a-0000-0000-c000-000000000000'
-var availabilityZones = pickZones('Microsoft.Compute', 'virtualMachines', location, 3)
+var availabilityZones = [for zone in pickZones('Microsoft.Compute', 'virtualMachines', location, 3): int(zone)]
 
 var splitSubnetId = subnetId != null ? split(subnetId, '/') : []
 var virtualNetworkResourceId = subnetId != null
