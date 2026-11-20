@@ -34,12 +34,12 @@ var vaultName = replace(namingStructure, '{rtype}', 'rsv')
 
 import * as backupPolicyTypes from '../types/backupPolicyTypes.bicep'
 
-resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' existing = {
+resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' existing = {
   name: keyVaultResourceGroupName
   scope: subscription()
 }
 
-resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' = {
+resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2026-07-01' = {
   name: vaultName
   location: location
   tags: tags
@@ -71,8 +71,19 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2024-04-01' = 
     securitySettings: {
       // Default to immutable but don't lock the policy
       immutabilitySettings: {
-        state: debugMode ? 'Disabled' : 'Unlocked'
+        state: !debugMode ? 'Unlocked' : 'Disabled'
+        configuration: !debugMode
+          ? {
+              type: 'AsPerPolicy'
+            }
+          : null
       }
+
+      // softDeleteSettings: {
+      //   enhancedSecurityState: debugMode ? 'Disabled' : 'Enabled'
+      //   softDeleteState: debugMode ? 'Disabled' : 'Enabled'
+      //   softDeleteRetentionPeriodInDays: 14
+      // }
     }
 
     // Do not allow cross-subscription restores (to avoid leaking data between projects)
@@ -117,16 +128,17 @@ module keyVaultRoleAssignment '../../module-library/roleAssignments/roleAssignme
 }
 
 // Enable soft delete settings
-resource backupConfig 'Microsoft.RecoveryServices/vaults/backupconfig@2024-04-01' = {
-  name: 'vaultconfig'
-  location: location
-  parent: recoveryServicesVault
-  properties: {
-    enhancedSecurityState: debugMode ? 'Disabled' : 'Enabled'
-    isSoftDeleteFeatureStateEditable: true
-    softDeleteFeatureState: debugMode ? 'Disabled' : 'Enabled'
-  }
-}
+// resource backupConfig 'Microsoft.RecoveryServices/vaults/backupconfig@2026-07-01' = {
+//   name: 'vaultconfig'
+//   location: location
+//   parent: recoveryServicesVault
+//   properties: {
+//     enhancedSecurityState: debugMode ? 'Disabled' : 'Enabled'
+//     // HACK: 2026-09-30: svaelter: Soft Delete is now always on in all regions
+//     // isSoftDeleteFeatureStateEditable: true
+//     // softDeleteFeatureState: debugMode ? 'Disabled' : 'Enabled'
+//   }
+// }
 
 // Break up the naming convention on the sequence placeholder to use for the backup RG name
 // The "n" in the backup resource group is another sequence number determined by Azure Backup
@@ -172,14 +184,14 @@ var backupPolicyAzureStorageProperties = {
 }
 
 // Create an enhanced VM backup policy to backup multiple times per day
-resource iaasVmBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2024-04-01' = {
+resource iaasVmBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2026-07-01' = {
   name: 'EnhancedPolicy-${workloadName}-${sequenceFormatted}'
   parent: recoveryServicesVault
   properties: union(backupPolicyCommonProperties, backupPolicyIaasVmProperties)
 }
 
 // Create a single Azure File backup policy, even if there are multiple file shares or storage accounts
-resource filesBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2024-04-01' = if (length(protectedAzureFileShares) > 0) {
+resource filesBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@2026-07-01' = if (length(protectedAzureFileShares) > 0) {
   name: 'AzureFileSharesPolicy-${workloadName}-${sequenceFormatted}'
   parent: recoveryServicesVault
   properties: union(backupPolicyCommonProperties, backupPolicyAzureStorageProperties)

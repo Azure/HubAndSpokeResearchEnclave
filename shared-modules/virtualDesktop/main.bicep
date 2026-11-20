@@ -44,7 +44,7 @@ param roles object
 param location string
 param tags object
 
-resource resourceGroup 'Microsoft.Resources/resourceGroups@2023-07-01' = {
+resource resourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: resourceGroupName
   location: location
   tags: tags
@@ -72,39 +72,38 @@ module avdModule 'avd.bicep' = {
 
 var useADDomainInformation = (logonType == 'ad')
 
-module sessionHostModule 'sessionHosts.bicep' =
-  if (sessionHostCount > 0) {
-    scope: resourceGroup
-    name: take(replace(deploymentNameStructure, '{rtype}', 'avd-sh'), 64)
-    params: {
-      namingStructure: namingStructure
-      subnetId: computeSubnetId
-      tags: tags
-      location: location
-      diskEncryptionSetId: useCMK ? diskEncryptionSetId : ''
+module sessionHostModule 'sessionHosts.bicep' = if (sessionHostCount > 0) {
+  scope: resourceGroup
+  name: take(replace(deploymentNameStructure, '{rtype}', 'avd-sh'), 64)
+  params: {
+    namingStructure: namingStructure
+    subnetId: computeSubnetId
+    tags: tags
+    location: location
+    diskEncryptionSetId: useCMK ? diskEncryptionSetId : ''
 
-      hostPoolName: avdModule.outputs.hostPoolName
-      hostPoolToken: avdModule.outputs.hostPoolRegistrationToken
+    hostPoolName: avdModule.outputs.hostPoolName
+    hostPoolToken: avdModule.outputs.hostPoolRegistrationToken
 
-      vmLocalAdminPassword: sessionHostLocalAdminPassword
-      vmLocalAdminUsername: sessionHostLocalAdminUsername
+    vmLocalAdminPassword: sessionHostLocalAdminPassword
+    vmLocalAdminUsername: sessionHostLocalAdminUsername
 
-      vmCount: sessionHostCount
-      vmNamePrefix: sessionHostNamePrefix
-      vmSize: sessionHostSize
+    vmCount: sessionHostCount
+    vmNamePrefix: sessionHostNamePrefix
+    vmSize: sessionHostSize
 
-      logonType: logonType
-      ADDomainInfo: useADDomainInformation
-        ? {
-            domainJoinPassword: domainJoinPassword
-            domainJoinUsername: domainJoinUsername
-            adDomainFqdn: adDomainFqdn
-            adOuPath: adOuPath
-          }
-        : null
+    logonType: logonType
+    ADDomainInfo: useADDomainInformation
+      ? {
+          domainJoinPassword: domainJoinPassword
+          domainJoinUsername: domainJoinUsername
+          adDomainFqdn: adDomainFqdn
+          adOuPath: adOuPath
+        }
+      : null
 
-      deploymentNameStructure: deploymentNameStructure
-      recoveryServicesVaultId: recoveryServicesVaultId
-      backupPolicyName: backupPolicyName
-    }
+    deploymentNameStructure: deploymentNameStructure
+    recoveryServicesVaultId: recoveryServicesVaultId
+    backupPolicyName: backupPolicyName
   }
+}

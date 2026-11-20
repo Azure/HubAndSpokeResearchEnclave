@@ -30,7 +30,7 @@ type application = {
  * RESOURCES
  */
 
-resource applicationGroup 'Microsoft.DesktopVirtualization/applicationGroups@2023-09-05' = {
+resource applicationGroup 'Microsoft.DesktopVirtualization/applicationGroups@2025-10-10' = {
   name: name
   location: location
   properties: {
@@ -41,7 +41,7 @@ resource applicationGroup 'Microsoft.DesktopVirtualization/applicationGroups@202
   tags: tags
 }
 
-resource remoteApplications 'Microsoft.DesktopVirtualization/applicationGroups/applications@2023-09-05' = [
+resource remoteApplications 'Microsoft.DesktopVirtualization/applicationGroups/applications@2025-10-10' = [
   for app in applications: {
     name: app.name
     parent: applicationGroup
@@ -50,7 +50,7 @@ resource remoteApplications 'Microsoft.DesktopVirtualization/applicationGroups/a
         ? app.commandLineSetting
         : 'Allow'
       commandLineArguments: contains(app, 'commandLineArguments') && !empty(app.commandLineArguments)
-        ? app.CommandLineArguments
+        ? app.commandLineArguments
         : ''
 
       applicationType: app.applicationType
@@ -72,7 +72,8 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
       roleDefinitionId: roleDefinitionId
       principalId: principleObjectId
     }
-  }]
+  }
+]
 
 output id string = applicationGroup.id
 output name string = applicationGroup.name

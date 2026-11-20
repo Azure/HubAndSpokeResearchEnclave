@@ -211,6 +211,29 @@ param backupSchedulePolicyTimeZone string = 'UTC'
 @description('In case of Hourly backup schedules, this retention time must be set to the time of one of the hourly backups.')
 param retentionBackupTime string = '2023-12-31T08:00:00.000Z'
 
+@description('''
+Microsoft Defender for Cloud subscription plans to enable. See [https://learn.microsoft.com/azure/defender-for-cloud/pricing](https://learn.microsoft.com/azure/defender-for-cloud/pricing) for more information.
+Legacy values for Arm: `PerApiCall` and KeyVaults: `PerTransaction` are no longer valid for new subscriptions or new enablements.
+These are set as defaults to allow compatibility with older deployments. The default values will be removed in a future release.
+Use the following values in new deployments:
+
+```bicep
+param mdfcSubPlans = {
+  StorageAccounts: 'DefenderForStorageV2'
+  SqlServers: null
+  VirtualMachines: 'P2'
+  Arm: 'PerSubscription'
+  KeyVaults: 'PerKeyVault'
+}
+```''')
+param mdfcSubPlans mdfcSubPlansType = {
+  StorageAccounts: 'DefenderForStorageV2'
+  SqlServers: null
+  VirtualMachines: 'P2'
+  Arm: 'PerApiCall'
+  KeyVaults: 'PerTransaction'
+}
+
 @description('The Azure resource ID of the management VM in the hub. Required if using AD join for Azure Files (`filesIdentityType = \'None\'`). This value is output by the hub deployment.')
 param hubManagementVmId string = ''
 @description('The Entra ID object ID of the user-assigned managed identity of the management VM. This will be given the necessary role assignment to perform a domain join on the storage account(s). Required if using AD join for Azure Files (`filesIdentityType = \'None\'`). This value is output by the hub deployment.')
@@ -230,6 +253,7 @@ param debugPrincipalId string = az.deployer().objectId
 //----------------------------- START TYPES --------------------------------
 
 import * as backupPolicyTypes from '../shared-modules/types/backupPolicyTypes.bicep'
+import { mdfcSubPlansType } from '../shared-modules/types/mdfcSubPlans.bicep'
 import { roleAssignmentType } from '../shared-modules/types/roleAssignment.bicep'
 
 //----------------------------- END TYPES ----------------------------------
@@ -293,32 +317,32 @@ module rolesModule '../module-library/roles.bicep' = {
 }
 
 // Create the resource groups
-resource securityRg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
+resource securityRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: replace(rgNamingStructure, '{rgname}', 'security')
   location: location
   tags: actualTags
 }
 
-resource storageRg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
+resource storageRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: replace(rgNamingStructure, '{rgname}', 'storage')
   location: location
   tags: actualTags
 }
 
-resource networkRg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
+resource networkRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: replace(rgNamingStructure, '{rgname}', 'network')
   location: location
   tags: actualTags
 }
 
-resource backupRg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
+resource backupRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: replace(rgNamingStructure, '{rgname}', 'backup')
   location: location
   tags: actualTags
 }
 
 // Create a resource group for additional compute resources (like shared VMs)
-resource computeRg 'Microsoft.Resources/resourceGroups@2023-07-01' = {
+resource computeRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: replace(rgNamingStructure, '{rgname}', 'compute')
   location: location
   tags: actualTags
@@ -385,6 +409,9 @@ module privateLinkDnsZoneLinkModule '../shared-modules/dns/privateDnsZoneVNetLin
 // Enable Defender for Cloud and Workload Protection Plans
 module defenderPlansModule './spoke-modules/security/defenderPlans.bicep' = {
   name: take(replace(deploymentNameStructure, '{rtype}', 'defenderplans'), 64)
+  params: {
+    subPlans: mdfcSubPlans
+  }
 }
 
 module keyVaultNameModule '../module-library/createValidAzResourceName.bicep' = {
@@ -786,7 +813,7 @@ var hubDnsZoneSubscriptionId = split(hubPrivateDnsZonesResourceGroupId, '/')[2]
 var hubDnsZoneResourceGroupName = split(hubPrivateDnsZonesResourceGroupId, '/')[4]
 var hubDnsZoneResourceGroup = resourceGroup(hubDnsZoneSubscriptionId, hubDnsZoneResourceGroupName)
 
-resource avdConnectionPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' existing = {
+resource avdConnectionPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
   name: 'privatelink.wvd.microsoft.com'
   scope: hubDnsZoneResourceGroup
 }

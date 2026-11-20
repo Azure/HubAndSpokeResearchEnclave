@@ -65,7 +65,7 @@ module uamiModule '../../../shared-modules/security/uami.bicep' = {
 }
 
 // Create the NIC
-resource nic 'Microsoft.Network/networkInterfaces@2022-11-01' = {
+resource nic 'Microsoft.Network/networkInterfaces@2025-09-01' = {
   name: replace(namingStructure, '{rtype}', '${vmNamePrefix}-nic')
   location: location
   tags: tags

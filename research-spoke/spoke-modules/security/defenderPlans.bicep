@@ -1,5 +1,7 @@
 targetScope = 'subscription'
 
+import { mdfcSubPlansType } from '../../../shared-modules/types/mdfcSubPlans.bicep'
+
 param pricingTier string = 'Standard'
 
 param plansToEnable array = [
@@ -17,17 +19,11 @@ param plansToEnableIfCommercial array = (az.environment().name == 'AzureCloud')
 
 var actualPlansToEnable = concat(plansToEnable, plansToEnableIfCommercial)
 
-var subPlans = {
-  StorageAccounts: 'DefenderForStorageV2'
-  SqlServers: null
-  VirtualMachines: 'P2'
-  Arm: 'PerApiCall'
-  KeyVaults: 'PerTransaction'
-}
+param subPlans mdfcSubPlansType
 
 // Enable one plan at a time only, otherwise failures may occur
 @batchSize(1)
-resource defenderPlan 'Microsoft.Security/pricings@2022-03-01' = [
+resource defenderPlan 'Microsoft.Security/pricings@2024-01-01' = [
   for plan in actualPlansToEnable: {
     name: plan
     properties: {

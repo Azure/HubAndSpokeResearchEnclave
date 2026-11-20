@@ -49,7 +49,7 @@ var actualVmTags = union(tags, { EnablePrivateNetworkGC: 'TRUE' })
 // TODO: Move NIC creation to this module
 
 // Create the virtual machine resource
-resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
+resource virtualMachine 'Microsoft.Compute/virtualMachines@2026-04-01' = {
   name: virtualMachineName
   location: location
   tags: actualVmTags
@@ -125,7 +125,7 @@ resource virtualMachine 'Microsoft.Compute/virtualMachines@2023-03-01' = {
 
 // HACK: 2024-07-05: .cloud TLDs (and maybe some others?) don't work by default due to reddog.microsoft.com as the DNS suffix for the connection
 // Set the computer's primary DNS suffix to the AD domain FQDN
-resource primaryDnsSuffixExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (logonType == 'ad' && endsWith(
+resource primaryDnsSuffixExtension 'Microsoft.Compute/virtualMachines/extensions@2026-04-01' = if (logonType == 'ad' && endsWith(
   domainJoinInfo.adDomainFqdn,
   '.cloud'
 )) {
@@ -145,7 +145,7 @@ resource primaryDnsSuffixExtension 'Microsoft.Compute/virtualMachines/extensions
 }
 
 // Entra ID join, if specified
-resource entraIDJoinExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (logonType == 'entraID') {
+resource entraIDJoinExtension 'Microsoft.Compute/virtualMachines/extensions@2026-04-01' = if (logonType == 'entraID') {
   name: 'EntraIDJoin'
   parent: virtualMachine
   location: location
@@ -165,7 +165,7 @@ resource entraIDJoinExtension 'Microsoft.Compute/virtualMachines/extensions@2023
 }
 
 // Domain join the session hosts to Active Directory, if specified
-resource domainJoinExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = if (logonType == 'ad') {
+resource domainJoinExtension 'Microsoft.Compute/virtualMachines/extensions@2026-04-01' = if (logonType == 'ad') {
   name: 'DomainJoin'
   parent: virtualMachine
   location: location
@@ -195,7 +195,7 @@ resource domainJoinExtension 'Microsoft.Compute/virtualMachines/extensions@2023-
 }
 
 // Deploy Windows Attestation, for boot integrity monitoring
-resource windowsGuestAttestationExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource windowsGuestAttestationExtension 'Microsoft.Compute/virtualMachines/extensions@2026-04-01' = {
   name: 'WindowsGuestAttestation'
   parent: virtualMachine
   location: location
@@ -224,7 +224,7 @@ resource windowsGuestAttestationExtension 'Microsoft.Compute/virtualMachines/ext
 }
 
 // Deploy the Windows VM Guest Configuration extension which is required for most regulatory compliance initiatives
-resource windowsVMGuestConfigExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource windowsVMGuestConfigExtension 'Microsoft.Compute/virtualMachines/extensions@2026-04-01' = {
   name: 'AzurePolicyforWindows'
   parent: virtualMachine
   location: location
@@ -256,7 +256,7 @@ module backupItems '../recovery/rsvProtectedItem-vm.bicep' = if (!empty(backupPo
 }
 
 // Install IaaSAntimalware extension
-resource antimalwareExtension 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = {
+resource antimalwareExtension 'Microsoft.Compute/virtualMachines/extensions@2026-04-01' = {
   name: 'IaaSAntimalware'
   parent: virtualMachine
   location: location

@@ -12,7 +12,7 @@ param useRemoteGateways bool = false
 
 var peeringName = take('peering-${localVNetFriendlyName}-to-${remoteVNetFriendlyName}', 80)
 
-resource peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2022-09-01' = {
+resource peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2025-09-01' = {
   name: '${localVNetName}/${peeringName}'
   properties: {
     remoteVirtualNetwork: {
