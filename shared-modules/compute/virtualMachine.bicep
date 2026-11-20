@@ -177,7 +177,7 @@ resource domainJoinExtension 'Microsoft.Compute/virtualMachines/extensions@2026-
     autoUpgradeMinorVersion: true
     settings: {
       name: domainJoinInfo.adDomainFqdn
-      ouPath: domainJoinInfo.adOuPath
+      ouPath: domainJoinInfo.?adOuPath ?? ''
       user: domainJoinInfo.domainJoinUsername
       restart: 'true'
       options: '3'

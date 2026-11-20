@@ -21,7 +21,8 @@
 			"extensions": [
 				"ms-azuretools.vscode-bicep",
 				"ms-dotnettools.vscode-dotnet-runtime",
-				"ms-vscode.azurecli"
+				"ms-vscode.azurecli",
+				"ms-vscode.powershell"
 			],
 	  		"settings": {
 				"terminal.integrated.defaultProfile.linux":  "pwsh",
