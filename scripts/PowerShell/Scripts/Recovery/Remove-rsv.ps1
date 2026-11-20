@@ -42,8 +42,15 @@ Write-Verbose "Selected Recovery Services Vault: $($VaultToDelete.Name) in Resou
 # Set-AzRecoveryServicesAsrVaultContext -Vault $VaultToDelete -WhatIf:$false
 #Set-AzRecoveryServicesVaultContext -Vault $VaultToDelete #-WhatIf:$false
 
-$UpdatedVault = Update-AzRecoveryServicesVault -ResourceGroupName $VaultToDelete.ResourceGroupName -Name $VaultToDelete.Name -ImmutabilityState "Disabled"
-Write-Host "Immutability state set to '$($UpdatedVault.Properties.ImmutabilitySettings.ImmutabilityState)'."
+Write-Verbose "Current immutability state: '$($VaultToDelete.Properties.ImmutabilitySettings.ImmutabilityState)'"
+if ("Unlocked" -eq $VaultToDelete.Properties.ImmutabilitySettings.ImmutabilityState) {
+	$UpdatedVault = Update-AzRecoveryServicesVault -ResourceGroupName $VaultToDelete.ResourceGroupName -Name $VaultToDelete.Name -ImmutabilityState "Disabled"
+	Write-Host "Immutability state set to '$($UpdatedVault.Properties.ImmutabilitySettings.ImmutabilityState)'."
+}
+elseif ("Locked" -eq $VaultToDelete.Properties.ImmutabilitySettings.ImmutabilityState) {
+	Write-Warning "Unable to delete the vault because it is in a 'Locked' immutability state."
+	return
+}
 
 # HACK: 2025-11-16: svaelter: Can no longer disable soft delete in any region for a Recovery Services Vault.
 # Ref: https://learn.microsoft.com/azure/backup/secure-by-default?tabs=preview#supported-scenarios
