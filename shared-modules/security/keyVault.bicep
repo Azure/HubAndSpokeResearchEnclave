@@ -16,7 +16,7 @@ param applyDeleteLock bool = !debugMode || useCMK
 param deploymentNameStructure string
 param tags object
 
-resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2026-02-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -50,15 +50,14 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
   tags: tags
 }
 
-resource keyVaultLock 'Microsoft.Authorization/locks@2020-05-01' =
-  if (applyDeleteLock) {
-    scope: keyVault
-    name: replace(namingStructure, '{rtype}', 'kv-lock')
-    properties: {
-      level: 'CanNotDelete'
-      notes: 'Deleting this Key Vault will delete the encryption keys used for storage accounts and managed disks in this spoke. Deleting encryption keys will make these resources inaccessible.'
-    }
+resource keyVaultLock 'Microsoft.Authorization/locks@2020-05-01' = if (applyDeleteLock) {
+  scope: keyVault
+  name: replace(namingStructure, '{rtype}', 'kv-lock')
+  properties: {
+    level: 'CanNotDelete'
+    notes: 'Deleting this Key Vault will delete the encryption keys used for storage accounts and managed disks in this spoke. Deleting encryption keys will make these resources inaccessible.'
   }
+}
 
 module keyVaultAdminRbac '../../module-library/roleAssignments/roleAssignment-kv.bicep' = [
   for (admin, i) in keyVaultAdmins: {

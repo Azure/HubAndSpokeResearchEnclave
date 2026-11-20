@@ -2,7 +2,7 @@ param appGwName string
 param principalId string
 param roleDefinitionId string
 
-resource appGw 'Microsoft.Network/applicationGateways@2022-05-01' existing = {
+resource appGw 'Microsoft.Network/applicationGateways@2025-09-01' existing = {
   name: appGwName
 }
 

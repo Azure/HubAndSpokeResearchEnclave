@@ -2,7 +2,7 @@ param redisCacheName string
 param principalId string
 param roleDefinitionId string
 
-resource redis 'Microsoft.Cache/redis@2022-06-01' existing = {
+resource redis 'Microsoft.Cache/redis@2024-11-01' existing = {
   name: redisCacheName
 }
 

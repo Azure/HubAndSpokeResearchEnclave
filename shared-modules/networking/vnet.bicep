@@ -60,13 +60,13 @@ var subnetArmDefs = [
 // Combine all subnet sources and ensure every subnet is deployed without default outbound access
 var allSubnets = [
   for subnet in union(additionalSubnets, subnetArmDefs): union(subnet, {
-    properties: union(subnet.?properties ?? {}, {
+    properties: union(subnet.?properties ?? {}, {
       defaultOutboundAccess: false
     })
   })
 ]
 
-resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
+resource vnet 'Microsoft.Network/virtualNetworks@2025-09-01' = {
   name: vnetName
   location: location
   properties: {
@@ -88,7 +88,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' = {
 // Retrieve the subnets as an array of existing resources
 // This is important because we need to ensure subnet return value is matched to the name of the subnet correctly - order matters
 // This works because the parent property is set to the virtual network, which means this won't be attempted until the VNet is created
-resource subnetRes 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' existing = [
+resource subnetRes 'Microsoft.Network/virtualNetworks/subnets@2025-09-01' existing = [
   for subnet in subnetDefsArray: {
     name: subnet.key
     parent: vnet

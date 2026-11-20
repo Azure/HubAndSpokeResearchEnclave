@@ -21,11 +21,11 @@ var dscAgentPackageLocation = 'https://github.com/Azure/avdaccelerator/raw/main/
 var scriptArguments = '-DscPath ${dscAgentPackageLocation} -StorageAccountName ${storageAccountName} -StorageAccountRG ${storageObjectsRgName} -StoragePurpose ${storagePurpose} -DomainName ${identityDomainName} -IdentityServiceProvider ${identityServiceProvider} -AzureCloudEnvironment ${az.environment().name} -SubscriptionId ${workloadSubsId} -AdminUserName ${adminUserName} -CustomOuPath ${useCustomOUPath} -OUName "${ouStgPath}" -ShareName ${fileShareName} -ClientId ${managedIdentityClientId} -SecurityPrincipalName "${securityPrincipalName}" -StorageAccountFqdn ${storageAccountFqdn} '
 var file = 'Manual-DSC-Storage-Scripts.ps1'
 
-resource managementVm 'Microsoft.Compute/virtualMachines@2024-03-01' existing = {
+resource managementVm 'Microsoft.Compute/virtualMachines@2026-04-01' existing = {
   name: hubManagementVmName
 }
 
-resource customStorageScript 'Microsoft.Compute/virtualMachines/extensions@2022-08-01' = {
+resource customStorageScript 'Microsoft.Compute/virtualMachines/extensions@2026-04-01' = {
   name: 'AzureFilesDomainJoin'
   parent: managementVm
   location: resourceGroup().location

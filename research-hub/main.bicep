@@ -237,7 +237,7 @@ var remoteDesktopAppGroupInfo = {
 //------------------------------- END VARIABLES --------------------------------
 
 // Create the network resource group
-resource networkRg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
+resource networkRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   #disable-next-line BCP334
   name: take(replace(rgNamingStructure, '{subWorkloadName}', 'networking'), 64)
   location: location
@@ -291,7 +291,7 @@ module networkModule 'hub-modules/networking/main.bicep' = {
  */
 
 // Create the security resource group
-resource securityRg 'Microsoft.Resources/resourceGroups@2022-09-01' = {
+resource securityRg 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   #disable-next-line BCP334
   name: take(replace(rgNamingStructure, '{subWorkloadName}', 'security'), 64)
   location: location
@@ -393,7 +393,7 @@ module diskEncryptionSetModule '../shared-modules/security/diskEncryptionSet.bic
  */
 
 // If needed, create the AVD resource group
-resource avdRg 'Microsoft.Resources/resourceGroups@2022-09-01' = if (!researchVmsAreSessionHosts) {
+resource avdRg 'Microsoft.Resources/resourceGroups@2025-04-01' = if (!researchVmsAreSessionHosts) {
   #disable-next-line BCP334
   name: take(replace(rgNamingStructure, '{subWorkloadName}', 'avd'), 64)
   location: location
@@ -528,7 +528,7 @@ module imagingModule 'hub-modules/imaging/main.bicep' = if (deployImaging) {
 }
 
 // Deploy a management VM, for example, to domain join the storage accounts in the spokes to AD
-resource managementRg 'Microsoft.Resources/resourceGroups@2022-09-01' = if (logonType == 'ad') {
+resource managementRg 'Microsoft.Resources/resourceGroups@2025-04-01' = if (logonType == 'ad') {
   #disable-next-line BCP334
   name: take(replace(rgNamingStructure, '{subWorkloadName}', 'management'), 64)
   location: location
