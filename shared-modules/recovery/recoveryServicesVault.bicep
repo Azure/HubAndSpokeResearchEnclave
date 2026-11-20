@@ -103,6 +103,7 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2026-07-01' = 
           }
           kekIdentity: {
             useSystemAssignedIdentity: true
+            // LATER: Use user-assigned identity if supported in commercial and Gov clouds
           }
           infrastructureEncryption: 'Enabled'
         }
@@ -117,7 +118,8 @@ resource recoveryServicesVault 'Microsoft.RecoveryServices/vaults@2026-07-01' = 
 
 // Create a role assignment on the Key Vault for the system-assigned managed identity of the vault
 module keyVaultRoleAssignment '../../module-library/roleAssignments/roleAssignment-kv.bicep' = if (useCMK) {
-  name: take(replace(deploymentNameStructure, '{rtype}', 'rsv-kv-rbac'), 80)
+  #disable-next-line BCP334
+  name: take(replace(deploymentNameStructure, '{rtype}', 'rsv-kv-rbac'), 64)
   scope: keyVaultResourceGroup
   params: {
     kvName: keyVaultName
@@ -200,6 +202,7 @@ resource filesBackupPolicy 'Microsoft.RecoveryServices/vaults/backupPolicies@202
 // Create a protected item per Azure File Share to be protected
 module fileShareProtectedItems 'rsvProtectedItem-fs.bicep' = [
   for fileShare in protectedAzureFileShares: {
+    #disable-next-line BCP334
     name: take(replace(deploymentNameStructure, '{rtype}', 'rsv-fs-${fileShare}'), 64)
     params: {
       backupPolicyName: filesBackupPolicy.name
