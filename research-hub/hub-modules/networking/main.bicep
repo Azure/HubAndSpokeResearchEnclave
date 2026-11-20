@@ -45,6 +45,7 @@ param tags object
 param deploymentTime string
 param deploymentNameStructure string
 param resourceNamingStructure string
+param enableAvmTelemetry bool = true
 @description('The resource naming structure to use for IP Group resources. For ease of use when creating firewall rules, it is useful to change the order of the segments. Optional; defaults to resourceNamingStructure.')
 param ipGroupNamingStructure string = resourceNamingStructure
 
@@ -100,6 +101,32 @@ var createManagementIPConfiguration = (firewallTier == 'Basic' || firewallForced
 // TODO: Replace the {{nvaIPAddress}} placeholder with the upstream NVA's IP address
 var AzureFirewallSubnetRoutes = firewallForcedTunnel ? [] : loadJsonContent('./routes/AzureFirewallNormal.jsonc')
 
+module firewallNatGatewayModule 'br/public:avm/res/network/nat-gateway:2.1.0' = if (!firewallForcedTunnel) {
+  name: take(replace(deploymentNameStructure, '{rtype}', 'ng-fw'), 64)
+  params: {
+    name: replace(resourceNamingStructure, '{rtype}', 'ng-fw')
+    availabilityZone: -1
+    natGatewaySku: 'StandardV2'
+    publicIPAddresses: [
+      {
+        name: replace(resourceNamingStructure, '{rtype}', 'pip-ng-fw')
+        skuName: 'StandardV2'
+      }
+    ]
+    location: location
+    tags: tags
+    enableTelemetry: enableAvmTelemetry
+  }
+}
+
+var firewallSubnetNatGatewayAssociation = firewallForcedTunnel
+  ? {}
+  : {
+      natGateway: {
+        id: firewallNatGatewayModule!.outputs.resourceId
+      }
+    }
+
 // Variable to hold the subnets that are always required, regardless of optional components
 var requiredSubnets = {
   DataSubnet: {
@@ -109,13 +136,16 @@ var requiredSubnets = {
     delegation: ''
     addressPrefix: cidrSubnet(networkAddressSpace, 27, 4) // The fifth /27
   }
-  AzureFirewallSubnet: {
-    serviceEndpoints: []
-    routes: AzureFirewallSubnetRoutes
-    //securityRules: [] Azure Firewall does not support NSGs on its subnets
-    delegation: ''
-    addressPrefix: cidrSubnet(networkAddressSpace, 26, 0) // The first /26
-  }
+  AzureFirewallSubnet: union(
+    {
+      serviceEndpoints: []
+      routes: AzureFirewallSubnetRoutes
+      //securityRules: [] Azure Firewall does not support NSGs on its subnets
+      delegation: ''
+      addressPrefix: cidrSubnet(networkAddressSpace, 26, 0) // The first /26
+    },
+    firewallSubnetNatGatewayAssociation
+  )
 }
 
 var AzureFirewallManagementSubnet = createManagementIPConfiguration

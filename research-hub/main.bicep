@@ -283,6 +283,7 @@ module networkModule 'hub-modules/networking/main.bicep' = {
     ipGroupNamingStructure: ipGroupNamingStructure
 
     logAnalyticsWorkspaceId: logAnalyticsWorkspaceId
+    enableAvmTelemetry: enableAvmTelemetry
   }
 }
 
